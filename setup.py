@@ -1,10 +1,8 @@
 from setuptools import setup
 
-from YBL_FRBUS_Extensions import __version__
-
 setup(
-  name="YBL_FRBUS_Extensions",
-  version = __version__,
+  name="YBL-FRBUS-Extensions",
+  version = "dev",
   install_requires=[
         "pandas",
         "scipy",
@@ -22,5 +20,5 @@ setup(
         "networkx",
         "pyfrbus",
   ],
-  packages=["YBL_FRBUS_Extensions"],
+  packages=["YBL-FRBUS-Extensions"],
 )
