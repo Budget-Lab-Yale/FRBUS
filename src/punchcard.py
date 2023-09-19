@@ -24,8 +24,7 @@ def ybl_Frbus(version: str, vintage: str) -> Frbus:
 
 def run_out(card: DataFrame, stamp: str, run: int, baseline: DataFrame, sim: DataFrame):
     # Create base path 
-    path = os.path.join("/gpfs/gibbs/project/sarin/shared/model_data/FRBUS", 
-        str(card.loc[run, "version"]), stamp, card.loc[run, "ID"])
+    path = os.path.join("/gpfs/gibbs/project/sarin/shared/model_data/FRBUS", card.loc[run, "version"], stamp, card.loc[run, "ID"])
     # Check if path exists, create if it doesn't 
     if not os.path.exists(path):
         os.makedirs(path)
