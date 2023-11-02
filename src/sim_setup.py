@@ -14,11 +14,39 @@ def levers(card: DataFrame, start: Union[str, Period], end: Union[str, Period], 
     data.loc[start:end, "dmpintay"] = card.loc[run, "dmpintay"]
     return(data)
 
+
+def apply_tax_delta(card: DataFrame, run: int, start: Union[str, Period], end: Union[str, Period], with_adds: DataFrame):
+    tax_sim_data_b = parse_tax_sim(card, run, True)
+    tax_sim_data_s = parse_tax_sim(card, run, False)
+
+    with_adds.loc[start:end, "trp_aerr"] += calc_trp_shock(tax_sim_data_b, tax_sim_data_s, with_adds, start-12, start-1) * 4
+
+    return(with_adds)
+
+
+def calc_trp_shock(tax_sim_data_b: DataFrame, tax_sim_data_s: DataFrame, with_adds: DataFrame, f_start: Union[str, Period], f_end: Union[str, Period]):
+
+    F = calc_f(tax_sim_data_b.loc[f_start:f_end, "liab_iit"], with_adds.loc[f_start:f_end, "tpn"])
+
+    ts_rev = tax_sim_data_s["liab_iit_net"] - tax_sim_data_b["liab_iit_net"]
+    denom = (with_adds["ypn"] - with_adds["gtn"])
+    
+    trp_shock_yr = (F * ts_rev)/denom
+    with_adds["trp"] = with_adds["trp"]/4
+    trp_yr = (with_adds.groupby("Year")["trp"].sum()) + trp_shock_yr
+    
+    return(denton(np.array(with_adds["trp"]), np.array(trp_yr)) - with_adds["trp"])
+
+
+def calc_f(tax_sim_data_b: DataFrame, with_adds: DataFrame):
+    with_adds["tpn"] = with_adds["tpn"]/4
+    tpn_yr = with_adds.groupby("Year")["tpn"].sum()
+    return(sum(tpn_yr/tax_sim_data_b["liab_iit"])/len(tpn_yr))
+
 def denton(I: np.array, A: np.array):
-    # This code is a modified version of the function found here:
-    # https://github.com/MaxLugo/denton
-    # It is unavailable using conda and challenging to install through the 
-    # back door. Max Lugo deserves full credit.
+    # This code is a modified version of the function found here: https://github.com/MaxLugo/denton
+    # It is unavailable using conda and challenging to install through the back door.
+    # Max Lugo deserves full credit.
 
     len_A, len_I, q = len(A), len(I), int(len(I)/len(A)) 
     I_tilde = np.linalg.pinv(np.diag(I))
@@ -40,10 +68,6 @@ def denton(I: np.array, A: np.array):
     X = X_lambda[:-len_A]
     rv = X
     return rv
-
-def build_tax_delta(card: DataFrame, run: int, start: Union[str, Period], end: Union[str, Period], with_adds: DataFrame):
-    tax_sim_data = parse_tax_sim(card, run)
-    
 
 def sim_path(tax_sim_data: DataFrame, start: Union[str, Period], end: Union[str, Period], with_adds: DataFrame):
         

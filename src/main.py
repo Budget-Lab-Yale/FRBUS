@@ -4,10 +4,10 @@ import pyfrbus
 import sys
 import os
 
-from punchcard import ybl_Frbus, ybl_load_data, run_out
+from punchcard import ybl_Frbus, ybl_load_data, parse_tax_sim, run_out
 from pyfrbus.load_data import load_data
 from pyfrbus.frbus import Frbus
-from sim_setup import levers, sim_path
+from sim_setup import levers, apply_tax_delta
 
 #can move into loop if we want a vintage stamp for every model run
 ct = datetime.datetime.now()
@@ -30,11 +30,11 @@ for run in range(card.shape[0]):
     start = pandas.Period(card.loc[run, "start"])
     end = pandas.Period(card.loc[run, "end"])
 
-    levers(card, start, end, data, run)
+    data = levers(card, start, end, data, run)
 
     with_adds = frbus.init_trac(start, end, data)
 
-    with_adds = sim_path(card, run, start, end, with_adds)
+    with_adds = apply_tax_delta(card, run, start, end, with_adds)
 
     sim = frbus.solve(start, end, with_adds)
 
