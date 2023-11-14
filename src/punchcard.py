@@ -8,6 +8,7 @@ from pandas import DataFrame, Period, PeriodIndex, read_csv
 from pyfrbus.load_data import load_data
 from pyfrbus.frbus import Frbus
 from typing import Union
+from sim_setup import calc_marginal
 
 def parse_tax_sim(card: DataFrame, run: int, base = False) -> DataFrame:
     version = str(card.loc[run, "ts_version"])
@@ -34,7 +35,7 @@ def read_gdp(path: str):
 
 
 
-def gather_med(card: DataFrame, run: int):
+def gather_med(card: DataFrame, run: int, y_path: str = None):
 
     version = str(card.loc[run, "ts_version"])
     vintage = str(card.loc[run, "ts_vintage"])
@@ -45,12 +46,13 @@ def gather_med(card: DataFrame, run: int):
 
     for filename in os.listdir(micro_path, 'files'):
         micro = pandas.read_csv(os.path.join(micro_path, filename))
-        # Something filtering for itemizers?
-
+        micro = micro[micro["mort_int_item_ded"] > 0]
         micro.sort_values(by=['agi'])
         micro["csum_wgt"] = numpy.cumsum(micro["weight"]/sum(micro["weight"]))
         micro = micro[micro.csum_wgt >= 0.5]
-        out.append(micro.head(1))
+        out.append(
+            calc_marginal(micro.head(1))
+            )
     
     return(out)
 

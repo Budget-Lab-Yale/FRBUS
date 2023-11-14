@@ -116,15 +116,13 @@ def inner_band(a, W):
     strided = np.lib.stride_tricks.as_strided
     return strided(b[W-1:], shape=(W,len(a)+W-1), strides=(-s,s))
 
-def calc_marginal(card: DataFrame, run: int, brackets: array = None, rates: array = None):
+def calc_marginal(card: DataFrame, run: int, y_path: str = None):
+    
+    
     if(brackets is None):
         brackets = np.array([11000,44725,95375,182100,231250,578125])
     if(rates is None):
         rates = np.array([10,12,22,24,32,35,37])
 
-    meds = gather_med(card, run)
-    # THE NEXT LINE WON'T WORK
-    meds[["txbl_inc"]] *= (2 - (meds[["filing_status"]] == 2))
-    trfpm = pandas.cut(meds[["txbl_inc"]], bins=brackets, labels=rates)
-
-    return(trfpm)
+    
+    return(marginal)
