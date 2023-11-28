@@ -8,7 +8,6 @@ from pandas import DataFrame, Period, PeriodIndex, read_csv
 from pyfrbus.load_data import load_data
 from pyfrbus.frbus import Frbus
 from typing import Union
-from sim_setup import calc_marginal
 
 def parse_tax_sim(card: DataFrame, run: int, base = False) -> DataFrame:
     version = str(card.loc[run, "ts_version"])
@@ -16,9 +15,10 @@ def parse_tax_sim(card: DataFrame, run: int, base = False) -> DataFrame:
     if(base):
         ts_id = "baseline/static"
     else:
-        ts_id = str(card.loc[run, "ts_ID"]) + "/conventional"
+        ts_id = str(card.loc[run, "ts_id"]) + "/conventional"
 
-    ts = pandas.read_csv(os.path.join("/gpfs/gibbs/project/sarin/shared/model_data/Tax-Simulator", version, vintage, ts_id, "totals/1040.csv"), index_col = 0)
+    #ts = pandas.read_csv(os.path.join("/gpfs/gibbs/project/sarin/shared/model_data/Tax-Simulator", version, vintage, ts_id, "totals/1040.csv"), index_col = 0)
+    ts = pandas.read_csv(os.path.join("/vast/palmer/scratch/sarin/jar335/Tax-Simulator", version, vintage, ts_id, "totals/1040.csv"), index_col = 0)
 
     ts.index = pandas.PeriodIndex(ts.index, freq="Y")
     
@@ -34,28 +34,6 @@ def read_gdp(path: str):
     return(out[["gdp"]])
 
 
-
-def gather_med(card: DataFrame, run: int, y_path: str = None):
-
-    version = str(card.loc[run, "ts_version"])
-    vintage = str(card.loc[run, "ts_vintage"])
-    ts_id   = str(card.loc[run, "ts_ID"])
-
-    micro_path = os.path.join("/gpfs/gibbs/project/sarin/shared/model_data/Tax-Simulator", version, vintage, ts_id, "static/detail")
-    out = numpy.array()
-
-    for filename in os.listdir(micro_path, 'files'):
-        micro = pandas.read_csv(os.path.join(micro_path, filename))
-        micro = micro[micro["mort_int_item_ded"] > 0]
-        micro.sort_values(by=['agi'])
-        micro["csum_wgt"] = numpy.cumsum(micro["weight"]/sum(micro["weight"]))
-        micro = micro[micro.csum_wgt >= 0.5]
-        out.append(
-            calc_marginal(micro.head(1))
-            )
-    
-    return(out)
-
 def run_out(card: DataFrame, stamp: str, run: int, baseline: DataFrame, sim: DataFrame):
     # Create base path 
     path = os.path.join("/gpfs/gibbs/project/sarin/shared/model_data/FRBUS", card.loc[run, "version"], stamp, card.loc[run, "ID"])
@@ -69,7 +47,7 @@ def run_out(card: DataFrame, stamp: str, run: int, baseline: DataFrame, sim: Dat
 
 def dynamic_rev(card: DataFrame, run: int, stamp: str, start: Union[str, Period], end: Union[str, Period], sim: DataFrame):
     cbo = read_gdp(card.loc[run, "cbo_path"])
-    cbo = cbo.iloc[start.year:end.year]
+    cbo = cbo.loc[start.year:end.year]
 
     # Algebraically, the 4s should cancel out, so no need to correct for annualization
     TPN_ds = sim.loc[start:end, "tpn"].groupby("Year").sum()
