@@ -24,7 +24,9 @@ start = pandas.Period("2017Q1", freq="Q") #data.index[0]
 end = pandas.Period("2033Q4", freq="Q")#data.index[len(data)-1]
 
 for run in range(1, len(card)):
-
+    start = card.loc[run, "start"]
+    end = card.loc[run, "end"]
+    
     with_adds = frbus.init_trac(start, end, data)
 
     with_adds.loc[start:end, "tpn_t"] = calc_tpn_path(card, run, with_adds)

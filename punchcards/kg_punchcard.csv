@@ -1,0 +1,5 @@
+﻿ID,ts_id,ts_version,ts_vintage,lb_version,lb_vintage,cbo_path
+baseline,baseline,v1,2023111010,v1,20230927,/gpfs/gibbs/project/sarin/shared/model_data/Macro-Projections/v1/2023092721/baseline
+scen1,kg_2pp_30,v1,2023111010,v1,20230927,/gpfs/gibbs/project/sarin/shared/model_data/Macro-Projections/v1/2023092721/baseline
+scen2,kg_2pp_50,v1,2023111010,v1,20230927,/gpfs/gibbs/project/sarin/shared/model_data/Macro-Projections/v1/2023092721/baseline
+scen3,kg_2pp_70,v1,2023111010,v1,20230927,/gpfs/gibbs/project/sarin/shared/model_data/Macro-Projections/v1/2023092721/baseline

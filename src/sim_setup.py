@@ -20,7 +20,16 @@ def levers(card: DataFrame, start: Union[str, Period], end: Union[str, Period], 
     return(data)
 
 def build_data(card: DataFrame, run: int):
-
+    #---------------------------------------------------------------------
+    # This function constructs a baseline dataset using the mcontrol protocol
+    # against which alternate scenario runs are compared. 
+    # Parameters:
+    #   card (DataFrame): Punchcard of test specific parameters
+    #   run  (int)      : Row for the card dataframe. Should always be 1.
+    # Returns:
+    #   longbase (DataFrame): FRB longbase.txt file adjusted to suit this 
+    #                         specific policy test.
+    #---------------------------------------------------------------------
     longbase = load_data(os.path.join("/gpfs/gibbs/project/sarin/shared/raw_data/FRBUS", str(card.loc[run, "lb_version"]), str(card.loc[run, "lb_vintage"]), "LONGBASE.TXT"))
 
     ts = parse_tax_sim(card, run, True)
@@ -33,17 +42,19 @@ def build_data(card: DataFrame, run: int):
 
     start = start.asfreq('Q') - 3
     end = end.asfreq('Q')
-    
+
     temp = longbase.loc[start:end, "xgdpn"]
     temp = temp.groupby(temp.index.year).sum() 
     temp.index = cbo.index
     cbo["TPN_ts"] *= temp
 
-    TPN_fs = (denton_boot(cbo["TPN_ts"].to_numpy())) 
+    TPN_fs = (denton_boot(cbo["TPN_ts"].to_numpy()))
     
     frbus = Frbus("/gpfs/gibbs/project/sarin/shared/conda_pkgs/pyfrbus/models/model.xml", mce="mcap+wp")
     longbase.loc[start:end, "dfpsrp"] = 1
     longbase.loc[start:end, "dfpdbt"] = 0
+    longbase.loc[start:end, "dfpex"] = 0
+
     longbase.loc[start:end, "dmpintay"] = 1
     longbase.loc[start:end, "dmptay"] = 0
 
@@ -78,6 +89,14 @@ def calc_tpn_path(card: DataFrame, run: int, data: DataFrame):
     return(TPN_fs)
 
 def denton_boot(TPN_ts: array):
+    #---------------------------------------------------------------------
+    # This function takes in annual tax revenue data and interpolates it 
+    # to quarterly frequency. This method smooths the new year step up.
+    # Parameters:
+    #   TPN_ts (array): Annual tax revenue data of length T
+    # Returns:
+    #   out (array): Quarterly tax revenue data of length 4T
+    #---------------------------------------------------------------------
     T = len(TPN_ts)
     Tq = T * 4
 
@@ -88,8 +107,7 @@ def denton_boot(TPN_ts: array):
     
     lhs1 = np.concatenate((C, J), axis=0)
     lhs2 = np.concatenate((J_t, zero4), axis=0)
-    lhs = np.linalg.inv(np.concatenate((lhs1, lhs2), axis=1))
-
+    lhs = np.linalg.inv(np.concatenate((lhs1, lhs2), axis=1))   
     rhs = np.append(np.zeros(Tq), TPN_ts)
 
     out = np.dot(lhs, rhs)
@@ -100,6 +118,13 @@ def calc_j(T: int):
     return(np.kron(np.eye(T), pattern))
 
 def calc_c(Tq: int):
+    #---------------------------------------------------------------------
+    # This function creates a square band matrix for Denton interpolation
+    # Parameters:
+    #   Tq (int) : The number of quarters to be interpolated
+    # Returns:
+    #   C (numpy): A Tq X Tq band matrix
+    #---------------------------------------------------------------------
     base = inner_band([2,-8,12,-8,2], Tq-4)
     v0 = np.zeros(Tq)
     v1 = np.zeros(Tq)
