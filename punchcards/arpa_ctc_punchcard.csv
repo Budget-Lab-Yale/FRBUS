@@ -1,0 +1,6 @@
+﻿ID,ts_id,start,end,ts_version,ts_vintage,lb_version,lb_vintage,cbo_path
+baseline,baseline,2017Q1,2033Q4,v1,2023112208,v1,20230927,/gpfs/gibbs/project/sarin/shared/model_data/Macro-Projections/v1/2023092721/baseline
+scen1,arpa_ctc_01-refundability,2017Q1,2033Q4,v1,2023112208,v1,20230927,/gpfs/gibbs/project/sarin/shared/model_data/Macro-Projections/v1/2023092721/baseline
+scen2,arpa_ctc_02-value,2017Q1,2033Q4,v1,2023112208,v1,20230927,/gpfs/gibbs/project/sarin/shared/model_data/Macro-Projections/v1/2023092721/baseline
+scen3,arpa_ctc_03-ssn,2017Q1,2033Q4,v1,2023112208,v1,20230927,/gpfs/gibbs/project/sarin/shared/model_data/Macro-Projections/v1/2023092721/baseline
+scen4,arpa_ctc_04-age,2017Q1,2033Q4,v1,2023112208,v1,20230927,/gpfs/gibbs/project/sarin/shared/model_data/Macro-Projections/v1/2023092721/baseline
