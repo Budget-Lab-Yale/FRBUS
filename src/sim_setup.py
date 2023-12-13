@@ -8,7 +8,7 @@ from numpy import array
 from typing import Union
 from pyfrbus.load_data import load_data
 from pyfrbus.frbus import Frbus
-from punchcard import parse_tax_sim, read_gdp
+from punchcard import parse_tax_sim, read_gdp, parse_corp_sim
 
 
 def levers(card: DataFrame, start: Union[str, Period], end: Union[str, Period], data: DataFrame, run: int):
@@ -35,10 +35,13 @@ def build_data(card: DataFrame, run: int):
     ts = parse_tax_sim(card, run, True)
     start = ts.index[0]
     end = ts.index[len(ts)-1]
+
+    cs = parse_corp_sim(card, run)
     
     cbo = read_gdp(card.loc[run, "cbo_path"])
     cbo = cbo.loc[start:end]
     cbo['TPN_ts'] = ts["liab_iit_net"] / cbo["gdp"]
+    cbo['TCIN_cs'] = cs["TCIN"] / cbo["gdp"]
 
     start = start.asfreq('Q') - 3
     end = end.asfreq('Q')
@@ -47,9 +50,11 @@ def build_data(card: DataFrame, run: int):
     temp = temp.groupby(temp.index.year).sum() 
     temp.index = cbo.index
     cbo["TPN_ts"] *= temp
+    cbo["TCIN_cs"] *= temp
 
-    TPN_fs = (denton_boot(cbo["TPN_ts"].to_numpy()))
-    
+    TPN_fs = denton_boot(cbo["TPN_ts"].to_numpy())
+    TCIN_fs = denton_boot(cbo["TCIN_cs"].to_numpy())
+
     frbus = Frbus("/gpfs/gibbs/project/sarin/shared/conda_pkgs/pyfrbus/models/model.xml", mce="mcap+wp")
     longbase.loc[start:end, "dfpsrp"] = 1
     longbase.loc[start:end, "dfpdbt"] = 0
@@ -60,8 +65,9 @@ def build_data(card: DataFrame, run: int):
 
     with_adds = frbus.init_trac(start, end, longbase)
     with_adds.loc[start:end, "tpn_t"] = TPN_fs
+    with_adds.loc[start:end, "tcin_t"] = TCIN_fs
 
-    out = frbus.mcontrol(start, end, with_adds, targ=["tpn"], traj=["tpn_t"], inst=["trp_aerr"])
+    out = frbus.mcontrol(start, end, with_adds, targ=["tpn", "tcin"], traj=["tpn_t", "tcin_t"], inst=["trp_aerr", "trci_aerr"])
     out = out.filter(regex="^((?!_).)*$")
 
     longbase.loc[start:end,:] = out.loc[start:end,:]

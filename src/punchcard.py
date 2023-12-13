@@ -24,6 +24,11 @@ def parse_tax_sim(card: DataFrame, run: int, base = False) -> DataFrame:
     
     return(ts[["liab_iit", "liab_iit_net"]])
 
+def parse_corp_sim(card: DataFrame, run: int) -> DataFrame:
+    cs = pandas.read_csv(str(card.loc[run, "corp_data"]), index_col=0)
+    cs.index = pandas.PeriodIndex(cs.index, freq="Y")
+    return(cs)
+
 def read_gdp(path: str):
     base = pandas.read_csv(os.path.join(path, "historical.csv"), index_col=0)
     proj = pandas.read_csv(os.path.join(path, "projections.csv"), index_col=0)
