@@ -1,0 +1,177 @@
+﻿count,end_long,delta_pers,delta_corp,Converge,RunTime,Last_surp_val,Error
+40, 2065Q3,-0.0,-0.02,1,33.87641525268555,-3625.9122278484133,No Errors 
+20, 2064Q3,-0.0,-0.01,1,35.74487590789795,-3461.869051325926,No Errors 
+16, 2064Q3,-0.0,-0.0,1,35.17911744117737,-3241.91031113768,No Errors 
+4, 2063Q3,-0.0,-0.01,1,34.23532152175903,-3466.9248761722333,No Errors 
+24, 2064Q3,-0.0,-0.02,1,36.95529794692993,-3652.1376974634445,No Errors 
+8, 2063Q3,-0.0,-0.02,1,34.408303022384644,-3653.0636504859326,No Errors 
+36, 2065Q3,-0.0,-0.01,1,35.61471080780029,-3443.4826392597233,No Errors 
+0, 2063Q3,-0.0,-0.0,1,34.73991799354553,-3246.3033543546644,No Errors 
+32, 2065Q3,-0.0,-0.0,1,35.7904691696167,-3228.414038538467,No Errors 
+52, 2066Q3,-0.0,-0.01,1,35.26989769935608,-3417.0999863710626,No Errors 
+68, 2067Q3,-0.0,-0.01,1,36.31863307952881,-3383.9445896995726,No Errors 
+56, 2066Q3,-0.0,-0.02,1,36.4477915763855,-3578.354764981891,No Errors 
+48, 2066Q3,-0.0,-0.0,1,37.6951904296875,-3207.8187668614055,No Errors 
+64, 2067Q3,-0.0,-0.0,1,38.30173063278198,-3187.094863322573,No Errors 
+80, 2068Q3,-0.0,-0.0,1,38.264060735702515,-3168.034725709013,No Errors 
+72, 2067Q3,-0.0,-0.02,1,40.19379687309265,-3507.9915008919447,No Errors 
+84, 2068Q3,-0.0,-0.01,1,39.92403793334961,-3352.7550846405884,No Errors 
+96, 2069Q3,-0.0,-0.0,1,38.64347743988037,-3153.176871611625,No Errors 
+100, 2069Q3,-0.0,-0.01,1,38.815401792526245,-3327.7599005302836,No Errors 
+112, 2070Q3,-0.0,-0.0,1,40.71233820915222,-3145.530886173459,No Errors 
+128, 2071Q3,-0.0,-0.0,1,41.245641231536865,-3144.442556346587,No Errors 
+116, 2070Q3,-0.0,-0.01,1,41.81044292449951,-3311.9668137198255,No Errors 
+88, 2068Q3,-0.0,-0.02,1,44.811790227890015,-3381.4688617828583,No Errors 
+144, 2072Q3,-0.0,-0.0,1,41.93778705596924,-3148.4067437650515,No Errors 
+160, 2073Q3,-0.0,-0.0,1,44.200165033340454,-3155.5002271620933,No Errors 
+132, 2071Q3,-0.0,-0.01,1,50.96578073501587,-3305.052324200825,No Errors 
+148, 2072Q3,-0.0,-0.01,1,50.75204801559448,-3308.9494639062837,No Errors 
+164, 2073Q3,-0.0,-0.01,1,49.46472954750061,-3318.8623206715774,No Errors 
+108, 2069Q3,-0.0,-0.05,-1,0,0,mcontrol has failed to converge - check that instruments can move targets 
+28, 2064Q3,-0.0,-0.05,-1,0,0,mcontrol has failed to converge - check that instruments can move targets 
+44, 2065Q3,-0.0,-0.05,-1,0,0,mcontrol has failed to converge - check that instruments can move targets 
+12, 2063Q3,-0.0,-0.05,-1,0,0,mcontrol has failed to converge - check that instruments can move targets 
+60, 2066Q3,-0.0,-0.05,-1,0,0,mcontrol has failed to converge - check that instruments can move targets 
+76, 2067Q3,-0.0,-0.05,-1,0,0,mcontrol has failed to converge - check that instruments can move targets 
+92, 2068Q3,-0.0,-0.05,-1,0,0,mcontrol has failed to converge - check that instruments can move targets 
+124, 2070Q3,-0.0,-0.05,-1,0,0,mcontrol has failed to converge - check that instruments can move targets 
+104, 2069Q3,-0.0,-0.02,-1,0,0,mcontrol has failed to converge - check that instruments can move targets 
+117, 2070Q3,-0.01,-0.01,-1,0,0,mcontrol has failed to converge - check that instruments can move targets 
+120, 2070Q3,-0.0,-0.02,-1,0,0,mcontrol has failed to converge - check that instruments can move targets 
+172, 2073Q3,-0.0,-0.05,-1,0,0,mcontrol has failed to converge - check that instruments can move targets 
+136, 2071Q3,-0.0,-0.02,-1,0,0,mcontrol has failed to converge - check that instruments can move targets 
+140, 2071Q3,-0.0,-0.05,-1,0,0,mcontrol has failed to converge - check that instruments can move targets 
+156, 2072Q3,-0.0,-0.05,-1,0,0,mcontrol has failed to converge - check that instruments can move targets 
+41, 2065Q3,-0.01,-0.02,-1,0,0,mcontrol has failed to converge - check that instruments can move targets 
+152, 2072Q3,-0.0,-0.02,-1,0,0,mcontrol has failed to converge - check that instruments can move targets 
+37, 2065Q3,-0.01,-0.01,-1,0,0,mcontrol has failed to converge - check that instruments can move targets 
+21, 2064Q3,-0.01,-0.01,-1,0,0,mcontrol has failed to converge - check that instruments can move targets 
+168, 2073Q3,-0.0,-0.02,-1,0,0,mcontrol has failed to converge - check that instruments can move targets 
+17, 2064Q3,-0.01,-0.0,-1,0,0,mcontrol has failed to converge - check that instruments can move targets 
+33, 2065Q3,-0.01,-0.0,-1,0,0,mcontrol has failed to converge - check that instruments can move targets 
+25, 2064Q3,-0.01,-0.02,-1,0,0,mcontrol has failed to converge - check that instruments can move targets 
+9, 2063Q3,-0.01,-0.02,-1,0,0,mcontrol has failed to converge - check that instruments can move targets 
+1, 2063Q3,-0.01,-0.0,-1,0,0,mcontrol has failed to converge - check that instruments can move targets 
+53, 2066Q3,-0.01,-0.01,-1,0,0,mcontrol has failed to converge - check that instruments can move targets 
+81, 2068Q3,-0.01,-0.0,-1,0,0,mcontrol has failed to converge - check that instruments can move targets 
+49, 2066Q3,-0.01,-0.0,-1,0,0,mcontrol has failed to converge - check that instruments can move targets 
+69, 2067Q3,-0.01,-0.01,-1,0,0,mcontrol has failed to converge - check that instruments can move targets 
+57, 2066Q3,-0.01,-0.02,-1,0,0,mcontrol has failed to converge - check that instruments can move targets 
+65, 2067Q3,-0.01,-0.0,-1,0,0,mcontrol has failed to converge - check that instruments can move targets 
+73, 2067Q3,-0.01,-0.02,-1,0,0,mcontrol has failed to converge - check that instruments can move targets 
+101, 2069Q3,-0.01,-0.01,-1,0,0,mcontrol has failed to converge - check that instruments can move targets 
+97, 2069Q3,-0.01,-0.0,-1,0,0,mcontrol has failed to converge - check that instruments can move targets 
+89, 2068Q3,-0.01,-0.02,-1,0,0,mcontrol has failed to converge - check that instruments can move targets 
+85, 2068Q3,-0.01,-0.01,-1,0,0,mcontrol has failed to converge - check that instruments can move targets 
+113, 2070Q3,-0.01,-0.0,-1,0,0,mcontrol has failed to converge - check that instruments can move targets 
+145, 2072Q3,-0.01,-0.0,-1,0,0,mcontrol has failed to converge - check that instruments can move targets 
+129, 2071Q3,-0.01,-0.0,-1,0,0,mcontrol has failed to converge - check that instruments can move targets 
+133, 2071Q3,-0.01,-0.01,-1,0,0,mcontrol has failed to converge - check that instruments can move targets 
+165, 2073Q3,-0.01,-0.01,-1,0,0,mcontrol has failed to converge - check that instruments can move targets 
+161, 2073Q3,-0.01,-0.0,-1,0,0,mcontrol has failed to converge - check that instruments can move targets 
+149, 2072Q3,-0.01,-0.01,-1,0,0,mcontrol has failed to converge - check that instruments can move targets 
+5, 2063Q3,-0.01,-0.01,-1,0,0,mcontrol has failed to converge - check that instruments can move targets 
+45, 2065Q3,-0.01,-0.05,-1,0,0,mcontrol has failed to converge - check that instruments can move targets 
+13, 2063Q3,-0.01,-0.05,-1,0,0,mcontrol has failed to converge - check that instruments can move targets 
+109, 2069Q3,-0.01,-0.05,-1,0,0,mcontrol has failed to converge - check that instruments can move targets 
+61, 2066Q3,-0.01,-0.05,-1,0,0,mcontrol has failed to converge - check that instruments can move targets 
+77, 2067Q3,-0.01,-0.05,-1,0,0,mcontrol has failed to converge - check that instruments can move targets 
+22, 2064Q3,-0.02,-0.01,-1,0,0,mcontrol has failed to converge - check that instruments can move targets 
+93, 2068Q3,-0.01,-0.05,-1,0,0,mcontrol has failed to converge - check that instruments can move targets 
+42, 2065Q3,-0.02,-0.02,-1,0,0,mcontrol has failed to converge - check that instruments can move targets 
+105, 2069Q3,-0.01,-0.02,-1,0,0,mcontrol has failed to converge - check that instruments can move targets 
+34, 2065Q3,-0.02,-0.0,-1,0,0,mcontrol has failed to converge - check that instruments can move targets 
+137, 2071Q3,-0.01,-0.02,-1,0,0,mcontrol has failed to converge - check that instruments can move targets 
+26, 2064Q3,-0.02,-0.02,-1,0,0,mcontrol has failed to converge - check that instruments can move targets 
+125, 2070Q3,-0.01,-0.05,-1,0,0,mcontrol has failed to converge - check that instruments can move targets 
+2, 2063Q3,-0.02,-0.0,-1,0,0,mcontrol has failed to converge - check that instruments can move targets 
+166, 2073Q3,-0.02,-0.01,-1,0,0,mcontrol has failed to converge - check that instruments can move targets 
+121, 2070Q3,-0.01,-0.02,-1,0,0,mcontrol has failed to converge - check that instruments can move targets 
+173, 2073Q3,-0.01,-0.05,-1,0,0,mcontrol has failed to converge - check that instruments can move targets 
+118, 2070Q3,-0.02,-0.01,-1,0,0,mcontrol has failed to converge - check that instruments can move targets 
+14, 2063Q3,-0.02,-0.05,-1,0,0,mcontrol has failed to converge - check that instruments can move targets 
+150, 2072Q3,-0.02,-0.01,-1,0,0,mcontrol has failed to converge - check that instruments can move targets 
+153, 2072Q3,-0.01,-0.02,-1,0,0,mcontrol has failed to converge - check that instruments can move targets 
+141, 2071Q3,-0.01,-0.05,-1,0,0,mcontrol has failed to converge - check that instruments can move targets 
+50, 2066Q3,-0.02,-0.0,-1,0,0,mcontrol has failed to converge - check that instruments can move targets 
+58, 2066Q3,-0.02,-0.02,-1,0,0,mcontrol has failed to converge - check that instruments can move targets 
+66, 2067Q3,-0.02,-0.0,-1,0,0,mcontrol has failed to converge - check that instruments can move targets 
+169, 2073Q3,-0.01,-0.02,-1,0,0,mcontrol has failed to converge - check that instruments can move targets 
+70, 2067Q3,-0.02,-0.01,-1,0,0,mcontrol has failed to converge - check that instruments can move targets 
+10, 2063Q3,-0.02,-0.02,-1,0,0,mcontrol has failed to converge - check that instruments can move targets 
+74, 2067Q3,-0.02,-0.02,-1,0,0,mcontrol has failed to converge - check that instruments can move targets 
+157, 2072Q3,-0.01,-0.05,-1,0,0,mcontrol has failed to converge - check that instruments can move targets 
+102, 2069Q3,-0.02,-0.01,-1,0,0,mcontrol has failed to converge - check that instruments can move targets 
+82, 2068Q3,-0.02,-0.0,-1,0,0,mcontrol has failed to converge - check that instruments can move targets 
+98, 2069Q3,-0.02,-0.0,-1,0,0,mcontrol has failed to converge - check that instruments can move targets 
+90, 2068Q3,-0.02,-0.02,-1,0,0,mcontrol has failed to converge - check that instruments can move targets 
+27, 2064Q3,-0.05,-0.02,-1,0,0,mcontrol has failed to converge - check that instruments can move targets 
+23, 2064Q3,-0.05,-0.01,-1,0,0,mcontrol has failed to converge - check that instruments can move targets 
+38, 2065Q3,-0.02,-0.01,-1,0,0,mcontrol has failed to converge - check that instruments can move targets 
+114, 2070Q3,-0.02,-0.0,-1,0,0,mcontrol has failed to converge - check that instruments can move targets 
+6, 2063Q3,-0.02,-0.01,-1,0,0,mcontrol has failed to converge - check that instruments can move targets 
+146, 2072Q3,-0.02,-0.0,-1,0,0,mcontrol has failed to converge - check that instruments can move targets 
+122, 2070Q3,-0.02,-0.02,-1,0,0,mcontrol has failed to converge - check that instruments can move targets 
+130, 2071Q3,-0.02,-0.0,-1,0,0,mcontrol has failed to converge - check that instruments can move targets 
+18, 2064Q3,-0.02,-0.0,-1,0,0,mcontrol has failed to converge - check that instruments can move targets 
+134, 2071Q3,-0.02,-0.01,-1,0,0,mcontrol has failed to converge - check that instruments can move targets 
+29, 2064Q3,-0.01,-0.05,-1,0,0,mcontrol has failed to converge - check that instruments can move targets 
+46, 2065Q3,-0.02,-0.05,-1,0,0,mcontrol has failed to converge - check that instruments can move targets 
+162, 2073Q3,-0.02,-0.0,-1,0,0,mcontrol has failed to converge - check that instruments can move targets 
+15, 2063Q3,-0.05,-0.05,-1,0,0,mcontrol has failed to converge - check that instruments can move targets 
+54, 2066Q3,-0.02,-0.01,-1,0,0,mcontrol has failed to converge - check that instruments can move targets 
+71, 2067Q3,-0.05,-0.01,-1,0,0,mcontrol has failed to converge - check that instruments can move targets 
+62, 2066Q3,-0.02,-0.05,-1,0,0,mcontrol has failed to converge - check that instruments can move targets 
+83, 2068Q3,-0.05,-0.0,-1,0,0,mcontrol has failed to converge - check that instruments can move targets 
+110, 2069Q3,-0.02,-0.05,-1,0,0,mcontrol has failed to converge - check that instruments can move targets 
+86, 2068Q3,-0.02,-0.01,-1,0,0,mcontrol has failed to converge - check that instruments can move targets 
+3, 2063Q3,-0.05,-0.0,1,144.52614617347717,-322007.5465728283,No Errors 
+94, 2068Q3,-0.02,-0.05,-1,0,0,mcontrol has failed to converge - check that instruments can move targets 
+78, 2067Q3,-0.02,-0.05,-1,0,0,mcontrol has failed to converge - check that instruments can move targets 
+151, 2072Q3,-0.05,-0.01,-1,0,0,mcontrol has failed to converge - check that instruments can move targets 
+103, 2069Q3,-0.05,-0.01,-1,0,0,mcontrol has failed to converge - check that instruments can move targets 
+106, 2069Q3,-0.02,-0.02,-1,0,0,mcontrol has failed to converge - check that instruments can move targets 
+19, 2064Q3,-0.05,-0.0,-1,0,0,mcontrol has failed to converge - check that instruments can move targets 
+158, 2072Q3,-0.02,-0.05,-1,0,0,mcontrol has failed to converge - check that instruments can move targets 
+99, 2069Q3,-0.05,-0.0,-1,0,0,mcontrol has failed to converge - check that instruments can move targets 
+63, 2066Q3,-0.05,-0.05,-1,0,0,mcontrol has failed to converge - check that instruments can move targets 
+138, 2071Q3,-0.02,-0.02,-1,0,0,mcontrol has failed to converge - check that instruments can move targets 
+131, 2071Q3,-0.05,-0.0,-1,0,0,mcontrol has failed to converge - check that instruments can move targets 
+30, 2064Q3,-0.02,-0.05,-1,0,0,mcontrol has failed to converge - check that instruments can move targets 
+126, 2070Q3,-0.02,-0.05,-1,0,0,mcontrol has failed to converge - check that instruments can move targets 
+7, 2063Q3,-0.05,-0.01,-1,0,0,mcontrol has failed to converge - check that instruments can move targets 
+170, 2073Q3,-0.02,-0.02,-1,0,0,mcontrol has failed to converge - check that instruments can move targets 
+154, 2072Q3,-0.02,-0.02,-1,0,0,mcontrol has failed to converge - check that instruments can move targets 
+35, 2065Q3,-0.05,-0.0,-1,0,0,mcontrol has failed to converge - check that instruments can move targets 
+43, 2065Q3,-0.05,-0.02,-1,0,0,mcontrol has failed to converge - check that instruments can move targets 
+142, 2071Q3,-0.02,-0.05,-1,0,0,mcontrol has failed to converge - check that instruments can move targets 
+163, 2073Q3,-0.05,-0.0,-1,0,0,mcontrol has failed to converge - check that instruments can move targets 
+174, 2073Q3,-0.02,-0.05,-1,0,0,mcontrol has failed to converge - check that instruments can move targets 
+79, 2067Q3,-0.05,-0.05,-1,0,0,mcontrol has failed to converge - check that instruments can move targets 
+147, 2072Q3,-0.05,-0.0,-1,0,0,mcontrol has failed to converge - check that instruments can move targets 
+115, 2070Q3,-0.05,-0.0,-1,0,0,mcontrol has failed to converge - check that instruments can move targets 
+47, 2065Q3,-0.05,-0.05,-1,0,0,mcontrol has failed to converge - check that instruments can move targets 
+51, 2066Q3,-0.05,-0.0,-1,0,0,mcontrol has failed to converge - check that instruments can move targets 
+11, 2063Q3,-0.05,-0.02,-1,0,0,mcontrol has failed to converge - check that instruments can move targets 
+107, 2069Q3,-0.05,-0.02,-1,0,0,mcontrol has failed to converge - check that instruments can move targets 
+75, 2067Q3,-0.05,-0.02,-1,0,0,mcontrol has failed to converge - check that instruments can move targets 
+67, 2067Q3,-0.05,-0.0,-1,0,0,mcontrol has failed to converge - check that instruments can move targets 
+167, 2073Q3,-0.05,-0.01,-1,0,0,mcontrol has failed to converge - check that instruments can move targets 
+59, 2066Q3,-0.05,-0.02,-1,0,0,mcontrol has failed to converge - check that instruments can move targets 
+39, 2065Q3,-0.05,-0.01,-1,0,0,mcontrol has failed to converge - check that instruments can move targets 
+119, 2070Q3,-0.05,-0.01,-1,0,0,mcontrol has failed to converge - check that instruments can move targets 
+175, 2073Q3,-0.05,-0.05,-1,0,0,mcontrol has failed to converge - check that instruments can move targets 
+91, 2068Q3,-0.05,-0.02,-1,0,0,mcontrol has failed to converge - check that instruments can move targets 
+55, 2066Q3,-0.05,-0.01,-1,0,0,mcontrol has failed to converge - check that instruments can move targets 
+135, 2071Q3,-0.05,-0.01,-1,0,0,mcontrol has failed to converge - check that instruments can move targets 
+31, 2064Q3,-0.05,-0.05,-1,0,0,mcontrol has failed to converge - check that instruments can move targets 
+123, 2070Q3,-0.05,-0.02,-1,0,0,mcontrol has failed to converge - check that instruments can move targets 
+87, 2068Q3,-0.05,-0.01,-1,0,0,mcontrol has failed to converge - check that instruments can move targets 
+111, 2069Q3,-0.05,-0.05,-1,0,0,mcontrol has failed to converge - check that instruments can move targets 
+95, 2068Q3,-0.05,-0.05,-1,0,0,mcontrol has failed to converge - check that instruments can move targets 
+143, 2071Q3,-0.05,-0.05,-1,0,0,mcontrol has failed to converge - check that instruments can move targets 
+139, 2071Q3,-0.05,-0.02,-1,0,0,mcontrol has failed to converge - check that instruments can move targets 
+171, 2073Q3,-0.05,-0.02,-1,0,0,mcontrol has failed to converge - check that instruments can move targets 
+159, 2072Q3,-0.05,-0.05,-1,0,0,mcontrol has failed to converge - check that instruments can move targets 
+127, 2070Q3,-0.05,-0.05,-1,0,0,mcontrol has failed to converge - check that instruments can move targets 
+155, 2072Q3,-0.05,-0.02,-1,0,0,mcontrol has failed to converge - check that instruments can move targets 
