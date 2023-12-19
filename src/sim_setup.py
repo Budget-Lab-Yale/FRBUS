@@ -73,17 +73,23 @@ def build_data(card: DataFrame, run: int):
     longbase.loc[start:end,:] = out.loc[start:end,:]
     return(longbase)
 
-def calc_tpn_path(card: DataFrame, run: int, start: Union[str, Period], end: Union[str, Period], data: DataFrame):
+def calc_tpn_path(card: DataFrame, run: int, data: DataFrame, card_dates = False):
     ts = parse_tax_sim(card, run, False)
-    #start = ts.index[0]
-    #end = ts.index[len(ts)-1]
+    
+    if card_dates:
+        start = pandas.Period(card.loc[run, "start"][0:4], freq="Y")
+        end = pandas.Period(card.loc[run, "end"][0:4], freq="Y")
+    
+    else:
+        start = ts.index[0]
+        end = ts.index[len(ts)-1]
 
     cbo = read_gdp(card.loc[run, "cbo_path"])
-    cbo = cbo.loc[start.year:end.year]
+    cbo = cbo.loc[start:end]
     cbo['TPN_ts'] = ts["liab_iit_net"] / cbo["gdp"]
     
-    #start = start.asfreq('Q') - 3
-    #end = end.asfreq('Q')
+    start = start.asfreq('Q') - 3
+    end = end.asfreq('Q')
 
     temp = data.loc[start:end, "xgdpn"]
     temp = temp.groupby(temp.index.year).sum() 
@@ -94,17 +100,23 @@ def calc_tpn_path(card: DataFrame, run: int, start: Union[str, Period], end: Uni
     
     return(TPN_fs)
 
-def calc_tcin_path(card: DataFrame, run: int, start: Union[str, Period], end: Union[str, Period], data: DataFrame):
+def calc_tcin_path(card: DataFrame, run: int, data: DataFrame, card_dates = False):
     cs = parse_corp_sim(card, run)
-    #start = cs.index[0]
-    #end = cs.index[len(cs)-1]
+
+    if card_dates:
+        start = pandas.Period(card.loc[run, "start"][0:4], freq="Y")
+        end = pandas.Period(card.loc[run, "end"][0:4], freq="Y")
+
+    else:
+        start = cs.index[0]
+        end = cs.index[len(cs)-1]
 
     cbo = read_gdp(card.loc[run, "cbo_path"])
     cbo = cbo.loc[start.year:end.year]
     cbo['TCIN_cs'] = cs["TCIN"] / cbo["gdp"]
 
-    #start = start.asfreq('Q') - 3
-    #end = end.asfreq('Q')
+    start = start.asfreq('Q') - 3
+    end = end.asfreq('Q')
 
     temp = data.loc[start:end, "xgdpn"]
     temp = temp.groupby(temp.index.year).sum() 
@@ -115,27 +127,24 @@ def calc_tcin_path(card: DataFrame, run: int, start: Union[str, Period], end: Un
     
     return(TCIN_fs)
 
-def dynamic_rev(card: DataFrame, run: int, start: Union[str, Period], end: Union[str, Period], data: DataFrame, frbus: Frbus, delta=False):
+def dynamic_rev(card: DataFrame, run: int, start: Union[str, Period], end: Union[str, Period], data: DataFrame,  frbus: Frbus, delta=False):
     cbo = read_gdp(card.loc[run, "cbo_path"])
-    cbo = cbo.loc[start.year:end.year]
+    start_cbo = pandas.Period(str(start.year), freq="Y")
+    end_cbo = pandas.Period(str(end.year), freq="Y")
 
     if delta:
-        data.loc[start:end, "TRP_fs"] = (data.loc[start:end, "trp"] * calc_tpn_path(card, run, data)) / (data.loc[start:end, "ypn"] - data.loc[start:end, "gtn"])
-        data.loc[start:end, "TRCI_fs"] = (data.loc[start:end, "trci"] * calc_tcin_path(card, run, data)) / data.loc[start:end, "ynicpn"]
+        data.loc[start:end, "trp_t"] = ((data.loc[start:end, "tpn_d"] + calc_tpn_path(card, run, data, True)) / (data.loc[start:end, "ypn"] - data.loc[start:end, "gtn"]))
+        data.loc[start:end, "trci_t"] = (data.loc[start:end, "tcin_d"] + calc_tcin_path(card, run, data, True)) / data.loc[start:end, "ynicpn"]
 
     else:
-        data.loc[start:end, "TRP_fs"] = (calc_tpn_path(card, run, data)) / (data.loc[start:end, "ypn"] - data.loc[start:end, "gtn"])
-        data.loc[start:end, "TRCI_fs"] = (data.loc[start:end, "tcin"] + 10) / data.loc[start:end, "ynicpn"]
-        #data.loc[start:end, "TRCI_fs"] = (calc_tcin_path(card, run, data)) / data.loc[start:end, "ynicpn"]
+        data.loc[start:end, "TRP_fs"] = (calc_tpn_path(card, run, data, True)) / (data.loc[start:end, "ypn"] - data.loc[start:end, "gtn"])
+        data.loc[start:end, "TRCI_fs"] = (calc_tcin_path(card, run, data, True)) / data.loc[start:end, "ynicpn"]
     
-    print(data.loc[start:end, ["trp", "TRP_fs", "trci", "TRCI_fs"]])
+    print(data.loc[start:end, ["trci","trci_t"]])
 
-    sim = frbus.mcontrol(start, end, data, 
-        targ=["trp", "trci"], 
-        traj=["TRP_fs", "TRCI_fs"], 
-        inst=["trp_aerr", "trci_aerr"])
+    sim = frbus.mcontrol(start, end, data, targ=["trp", "trci"], traj=["trp_t", "trci_t"], inst=["trp_aerr", "trci_aerr"])
 
-    TPN_dynamic = (sim.loc[start:end, "tpn"].groupby(sim.index.year).sum()) * (cbo["gdp"]/data.loc[start:end, "xgdpn"].groupby(data.index.year).sum())
+    TPN_dynamic = (sim.loc[start:end, "tpn"].groupby(sim.index.year).sum()) * (cbo.loc[start_cbo:end_cbo,"gdp"]/data.loc[start:end, "xgdpn"].groupby(data.index.year).sum())
     TPN_dynamic.index = cbo.index
 
     return(TPN_dynamic)
