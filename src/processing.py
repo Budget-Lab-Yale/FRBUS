@@ -4,6 +4,7 @@ import numpy
 from pandas import DataFrame
 from pyfrbus.load_data import load_data
 
+from punchcard import read_gdp
 from sim_setup import denton_boot
 
 def dentonizer(data: DataFrame):
@@ -15,3 +16,7 @@ def dentonizer(data: DataFrame):
     out.index = pandas.period_range(start=str(data.index[0])+"Q1", end = str(data.index[len(data)-1])+"Q4", freq="Q")
 
     return(out)
+
+cbo = read_gdp("/gpfs/gibbs/project/sarin/shared/model_data/Macro-Projections/v2/2023121812/baseline")
+
+dentonizer(cbo).to_csv("CBO_dentonized.csv")

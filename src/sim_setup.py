@@ -50,7 +50,7 @@ def build_data(card: DataFrame, run: int):
     temp = temp.groupby(temp.index.year).sum() 
     temp.index = cbo.index
     cbo["TPN_ts"] *= temp
-    cbo["TCIN_cs"] *= temp
+    cbo["TCIN_cs"] *= temp 
 
     TPN_fs = denton_boot(cbo["TPN_ts"].to_numpy())
     TCIN_fs = denton_boot(cbo["TCIN_cs"].to_numpy())
@@ -73,17 +73,17 @@ def build_data(card: DataFrame, run: int):
     longbase.loc[start:end,:] = out.loc[start:end,:]
     return(longbase)
 
-def calc_tpn_path(card: DataFrame, run: int, data: DataFrame):
+def calc_tpn_path(card: DataFrame, run: int, start: Union[str, Period], end: Union[str, Period], data: DataFrame):
     ts = parse_tax_sim(card, run, False)
-    start = ts.index[0]
-    end = ts.index[len(ts)-1]
+    #start = ts.index[0]
+    #end = ts.index[len(ts)-1]
 
     cbo = read_gdp(card.loc[run, "cbo_path"])
-    cbo = cbo.loc[start:end]
+    cbo = cbo.loc[start.year:end.year]
     cbo['TPN_ts'] = ts["liab_iit_net"] / cbo["gdp"]
     
-    start = start.asfreq('Q') - 3
-    end = end.asfreq('Q')
+    #start = start.asfreq('Q') - 3
+    #end = end.asfreq('Q')
 
     temp = data.loc[start:end, "xgdpn"]
     temp = temp.groupby(temp.index.year).sum() 
@@ -94,17 +94,17 @@ def calc_tpn_path(card: DataFrame, run: int, data: DataFrame):
     
     return(TPN_fs)
 
-def calc_tcin_path(card: DataFrame, run: int, data: DataFrame):
+def calc_tcin_path(card: DataFrame, run: int, start: Union[str, Period], end: Union[str, Period], data: DataFrame):
     cs = parse_corp_sim(card, run)
-    start = cs.index[0]
-    end = cs.index[len(cs)-1]
+    #start = cs.index[0]
+    #end = cs.index[len(cs)-1]
 
     cbo = read_gdp(card.loc[run, "cbo_path"])
-    cbo = cbo.loc[start:end]
+    cbo = cbo.loc[start.year:end.year]
     cbo['TCIN_cs'] = cs["TCIN"] / cbo["gdp"]
 
-    start = start.asfreq('Q') - 3
-    end = end.asfreq('Q')
+    #start = start.asfreq('Q') - 3
+    #end = end.asfreq('Q')
 
     temp = data.loc[start:end, "xgdpn"]
     temp = temp.groupby(temp.index.year).sum() 
@@ -120,18 +120,22 @@ def dynamic_rev(card: DataFrame, run: int, start: Union[str, Period], end: Union
     cbo = cbo.loc[start.year:end.year]
 
     if delta:
-        data.loc[start:end, "TRP_fs"] = (data.loc[start:end, "trp"] + calc_tpn_path(card, run, data)) / (data.loc[start:end, "ypn"] - data.loc[start:end, "gtn"])
-        data.loc[start:end, "TRCI_fs"] = (data.loc[start:end, "trci"] + calc_tcin_path(card, run, data)) / data.loc[start:end, "ynicpn"]
+        data.loc[start:end, "TRP_fs"] = (data.loc[start:end, "trp"] * calc_tpn_path(card, run, data)) / (data.loc[start:end, "ypn"] - data.loc[start:end, "gtn"])
+        data.loc[start:end, "TRCI_fs"] = (data.loc[start:end, "trci"] * calc_tcin_path(card, run, data)) / data.loc[start:end, "ynicpn"]
 
     else:
-        data.loc["TRP_fs"] = (calc_tpn_path(card, run, data)) / (data.loc[start:end, "ypn"] - data.loc[start:end, "gtn"])
-        data.loc["TRCI_fs"] = (calc_tcin_path(card, run, data)) / data.loc[start:end, "ynicpn"]
+        data.loc[start:end, "TRP_fs"] = (calc_tpn_path(card, run, data)) / (data.loc[start:end, "ypn"] - data.loc[start:end, "gtn"])
+        data.loc[start:end, "TRCI_fs"] = (data.loc[start:end, "tcin"] + 10) / data.loc[start:end, "ynicpn"]
+        #data.loc[start:end, "TRCI_fs"] = (calc_tcin_path(card, run, data)) / data.loc[start:end, "ynicpn"]
+    
+    print(data.loc[start:end, ["trp", "TRP_fs", "trci", "TRCI_fs"]])
 
-    sim = frbus.mcontrol(start, end, data, targ=["trp", "trci"], traj=["TRP_fs", "TRCI_T"], inst=["trp_aerr", "trci_aerr"])
+    sim = frbus.mcontrol(start, end, data, 
+        targ=["trp", "trci"], 
+        traj=["TRP_fs", "TRCI_fs"], 
+        inst=["trp_aerr", "trci_aerr"])
 
-    # I think the annualization will algebraically cancel out here...
-    TPN_dynamic = (data.loc[start:end, "tpn"].groupby(data.index.year).sum()) * \
-        (cbo["gdp"]/data.loc[start:end, "xgdpn"].groupby(data.index.year).sum())
+    TPN_dynamic = (sim.loc[start:end, "tpn"].groupby(sim.index.year).sum()) * (cbo["gdp"]/data.loc[start:end, "xgdpn"].groupby(data.index.year).sum())
     TPN_dynamic.index = cbo.index
 
     return(TPN_dynamic)
