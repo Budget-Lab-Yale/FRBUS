@@ -31,6 +31,7 @@ cbo = read_gdp(card.loc[run, "cbo_path"])
 cbo = cbo.loc[start:end]
 cbo['TPN_ts'] = ts["liab_iit_net"] / cbo["gdp"]
 cbo['TCIN_cs'] = cs["TCIN"] / cbo["gdp"]
+#cbo['TCIN_cs'] = cbo["rev_corp"] / cbo["gdp"]
 cbo['gfsrpn_cbo'] = (cbo["rev"] - cbo["outlays"]) / cbo["gdp"]
 
 start = start.asfreq('Q') - 3
@@ -74,6 +75,8 @@ with_adds.loc[start:end, "tcin_t"] = TCIN_fs
 with_adds.loc[start:end, "xgdpn_t"] = with_adds.loc[start:end, "xgdpn"]
 with_adds.loc[start:end, "gfsrpn_t"] = gfsrpn_dent
 
+print(with_adds.loc[start:end, ["tcin", "tcin_t", "tpn", "tpn_t"]])
+
 out = frbus.mcontrol(start, end, with_adds, 
     targ=["tpn", "tcin", "xgdpn", "gfsrpn"], 
     traj=["tpn_t", "tcin_t", "xgdpn_t", "gfsrpn_t"], 
@@ -90,5 +93,5 @@ outpath = f"/gpfs/gibbs/project/sarin/shared/model_data/FRBUS/Baselines/{stamp}"
 if not os.path.exists(outpath):
     os.makedirs(outpath)
 
-longbase.to_csv(os.path.join(outpath, "LONGBASE.TXT"), index=False)
+#longbase.to_csv(os.path.join(outpath, "LONGBASE.TXT"), index=False)
 
