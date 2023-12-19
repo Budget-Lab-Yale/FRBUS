@@ -36,7 +36,7 @@ def read_gdp(path: str):
     out = base.append(proj)
     out.index = pandas.PeriodIndex(out.index, freq="Y")
     
-    return(out[["gdp"]])
+    return(out)
 
 
 def run_out(card: DataFrame, stamp: str, run: int, baseline: DataFrame, sim: DataFrame):

@@ -11,7 +11,7 @@ from punchcard import parse_tax_sim, read_gdp, parse_corp_sim
 from pyfrbus.sim_lib import sim_plot
 
 ct = datetime.datetime.now()
-stamp = str(ct.year)+str(ct.month)+str(ct.day)+str(ct.hour)+" NO S&L"
+stamp = str(ct.year)+str(ct.month)+str(ct.day)+str(ct.hour)+" TEST"
 
 card = pandas.read_csv(sys.argv[1])
 run = 0
@@ -31,6 +31,7 @@ cbo = read_gdp(card.loc[run, "cbo_path"])
 cbo = cbo.loc[start:end]
 cbo['TPN_ts'] = ts["liab_iit_net"] / cbo["gdp"]
 cbo['TCIN_cs'] = cs["TCIN"] / cbo["gdp"]
+cbo['gfsrpn_cbo'] = (cbo["rev"] - cbo["outlays"]) / cbo["gdp"]
 
 start = start.asfreq('Q') - 3
 end = end.asfreq('Q')
@@ -41,9 +42,11 @@ temp = temp.groupby(temp.index.year).sum()
 temp.index = cbo.index
 cbo["TPN_ts"] *= temp
 cbo["TCIN_cs"] *= temp 
+cbo["gfsrpn_cbo"] *= temp
 
 TPN_fs = denton_boot(cbo["TPN_ts"].to_numpy())
 TCIN_fs = denton_boot(cbo["TCIN_cs"].to_numpy())
+gfsrpn_dent = denton_boot(cbo["gfsrpn_cbo"].to_numpy())
 
 frbus = Frbus("/gpfs/gibbs/project/sarin/shared/conda_pkgs/pyfrbus/models/model.xml", mce="mcap+wp")
 longbase.loc[start-100:, 'dfpdbt'] = 0
@@ -64,20 +67,28 @@ longbase.loc[start:, "dmptr"] = 0
 longbase.loc[start:, "dmptrsh"] = 0
 
 with_adds = frbus.init_trac(start, end, longbase)
-with_adds.loc[start:end, "tpn_t"] = TPN_fs #+ with_adds.loc[start:end, "egsen"]
-#with_adds.loc[start:end, "tcin_t"] = TCIN_fs
-with_adds.loc[start:end, "xgdp_t"] = with_adds.loc[start:end, "xgdp"]
+with_adds.loc[start:end, "tpn_t"] = (TPN_fs + 
+    with_adds.loc[start:end, "egsln"] + with_adds.loc[start:end, "egsen"] +
+    TCIN_fs - with_adds.loc[start:end, "tcin"])
+with_adds.loc[start:end, "tcin_t"] = TCIN_fs
+with_adds.loc[start:end, "xgdpn_t"] = with_adds.loc[start:end, "xgdpn"]
+with_adds.loc[start:end, "gfsrpn_t"] = gfsrpn_dent
 
-out = frbus.mcontrol(start, end, with_adds, targ=["tpn", "xgdp"], traj=["tpn_t", "xgdp_t"], inst=["trp_aerr", "xpn_aerr"])
+out = frbus.mcontrol(start, end, with_adds, 
+    targ=["tpn", "tcin", "xgdpn", "gfsrpn"], 
+    traj=["tpn_t", "tcin_t", "xgdpn_t", "gfsrpn_t"], 
+    inst=["trp_aerr", "trci_aerr", "xpn_aerr", "ugfsrp_aerr"])
 
 out = out.filter(regex="^((?!_).)*$")
 
 longbase.loc[start:end,:] = out.loc[start:end,:]
+longbase = longbase.reset_index().rename(columns={"index":"obs"})
+longbase.columns = [col.upper() for col in longbase.columns]
 
 outpath = f"/gpfs/gibbs/project/sarin/shared/model_data/FRBUS/Baselines/{stamp}"
 
 if not os.path.exists(outpath):
     os.makedirs(outpath)
 
-pandas.DataFrame(longbase).to_csv(os.path.join(outpath, "LONGBASE.TXT"), index=True)
+longbase.to_csv(os.path.join(outpath, "LONGBASE.TXT"), index=False)
 
