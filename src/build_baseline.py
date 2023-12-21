@@ -10,11 +10,11 @@ from sim_setup import denton_boot
 from punchcard import parse_tax_sim, read_gdp, parse_corp_sim
 from pyfrbus.sim_lib import sim_plot
 
-ct = datetime.datetime.now()
-stamp = str(ct.year)+str(ct.month)+str(ct.day)+str(ct.hour)+" TEST"
-
 card = pandas.read_csv(sys.argv[1])
 run = 0
+
+ct = datetime.datetime.now()
+stamp = str(ct.year)+str(ct.month)+str(ct.day)+str(ct.hour)+str(card.loc[run, "stamp"])
 
 longbase = load_data(os.path.join("/gpfs/gibbs/project/sarin/shared/raw_data/FRBUS", str(card.loc[run, "lb_version"]), str(card.loc[run, "lb_vintage"]), "LONGBASE.TXT"))
 
@@ -23,8 +23,8 @@ ts = ts[-31:]
 
 cs = parse_corp_sim(card, run)
 
-start = pandas.Period("2023")
-end = pandas.Period("2053")
+start = pandas.Period("2017")
+end = pandas.Period("2047")
 end_long = end + 4*10
 
 cbo = read_gdp(card.loc[run, "cbo_path"])

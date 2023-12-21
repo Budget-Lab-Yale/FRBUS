@@ -19,27 +19,36 @@ def levers(card: DataFrame, start: Union[str, Period], end: Union[str, Period], 
     data.loc[start:end, "dmpintay"] = card.loc[run, "dmpintay"]
     return(data)
 
-def build_data(card: DataFrame, run: int):
+def build_data(card: DataFrame, run: int, raw = False, card_dates = False):
     #---------------------------------------------------------------------
     # This function constructs a baseline dataset using the mcontrol protocol
     # against which alternate scenario runs are compared. 
     # Parameters:
     #   card (DataFrame): Punchcard of test specific parameters
     #   run  (int)      : Row for the card dataframe. Should always be 1.
+    #   raw  (bool)     : Flag for if the baseline is constructed by YBL or the FOMC
     # Returns:
     #   longbase (DataFrame): FRB longbase.txt file adjusted to suit this 
     #                         specific policy test.
     #---------------------------------------------------------------------
-    longbase = load_data(os.path.join("/gpfs/gibbs/project/sarin/shared/raw_data/FRBUS", str(card.loc[run, "lb_version"]), str(card.loc[run, "lb_vintage"]), "LONGBASE.TXT"))
+    if raw:
+        longbase = load_data(os.path.join("/gpfs/gibbs/project/sarin/shared/raw_data/FRBUS", str(card.loc[run, "lb_version"]), str(card.loc[run, "lb_vintage"]), "LONGBASE.TXT"))
+    else:
+        longbase = load_data(os.path.join("/gpfs/gibbs/project/sarin/shared/model_data/FRBUS/Baselines", str(card.loc[run, "lb_vintage"]), "LONGBASE.TXT"))
 
     ts = parse_tax_sim(card, run, True)
-    start = ts.index[0]
-    end = ts.index[len(ts)-1]
+
+    if card_dates:
+        start = pandas.Period(card.loc[run, "start"][0:4], freq="Y")
+        end = pandas.Period(card.loc[run, "end"][0:4], freq="Y")
+    else:
+        start = ts.index[0]
+        end = ts.index[len(ts)-1]
 
     cs = parse_corp_sim(card, run)
     
     cbo = read_gdp(card.loc[run, "cbo_path"])
-    cbo = cbo.loc[start:end]
+    cbo = cbo.loc[start:end,:]
     cbo['TPN_ts'] = ts["liab_iit_net"] / cbo["gdp"]
     cbo['TCIN_cs'] = cs["TCIN"] / cbo["gdp"]
 
@@ -60,8 +69,22 @@ def build_data(card: DataFrame, run: int):
     longbase.loc[start:end, "dfpdbt"] = 0
     longbase.loc[start:end, "dfpex"] = 0
 
-    longbase.loc[start:end, "dmpintay"] = 1
-    longbase.loc[start:end, "dmptay"] = 0
+    longbase.loc[start-100:, 'dfpdbt'] = 0
+    longbase.loc[start-100:end, 'dfpex'] = 1
+    longbase.loc[start-100:end, 'dfpsrp'] = 0
+    longbase.loc[end+1:, 'dfpsrp'] = 1
+
+    longbase.loc[start:, "dmpintay"] = 1
+    longbase.loc[start:, "dmptay"] = 0
+    longbase.loc[start:, "dmpalt"] = 0
+    longbase.loc[start:, "dmpex"] = 0
+    longbase.loc[start:, "dmprr"] = 0
+    longbase.loc[start:, "dmptlr"] = 0
+    longbase.loc[start:, "dmptlur"] = 0
+    longbase.loc[start:, "dmptmax"] = 0
+    longbase.loc[start:, "dmptpi"] = 0
+    longbase.loc[start:, "dmptr"] = 0
+    longbase.loc[start:, "dmptrsh"] = 0
 
     with_adds = frbus.init_trac(start, end, longbase)
     with_adds.loc[start:end, "tpn_t"] = TPN_fs
@@ -130,8 +153,8 @@ def calc_tcin_path(card: DataFrame, run: int, data: DataFrame, card_dates = Fals
 
 def dynamic_rev(card: DataFrame, run: int, start: Period, end: Period, data: DataFrame,  frbus: Frbus, delta=False):
     cbo = read_gdp(card.loc[run, "cbo_path"])
-    start_cbo = pandas.Period(str(start.year), freq="Y")
-    end_cbo = pandas.Period(str(end.year), freq="Y")
+    #start_cbo = pandas.Period(str(start.year), freq="Y")
+    #end_cbo = pandas.Period(str(end.year), freq="Y")
 
     if delta:
         data.loc[start:end, "trp_t"] = ((data.loc[start:end, "tpn_d"] + calc_tpn_path(card, run, data, True)) / (data.loc[start:end, "ypn"] - data.loc[start:end, "gtn"]))
@@ -146,7 +169,7 @@ def dynamic_rev(card: DataFrame, run: int, start: Period, end: Period, data: Dat
     data_yr = data.groupby(data.index.year).sum()
     sim_yr  = sim.groupby(sim.index.year).sum()
 
-    cbo = cbo.loc[start_cbo:end_cbo,]
+    cbo = cbo.loc[start.asfreq('Y'):end.asfreq('Y'),]
     data_yr = data_yr.loc[start.year:end.year,]
     sim_yr = sim_yr.loc[start.year:end.year,]
 

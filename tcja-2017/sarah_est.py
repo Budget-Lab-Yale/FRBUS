@@ -75,3 +75,4 @@ with_adds.loc[start:end, "tcin_d"] = trci_delta
 dynamic = dynamic_rev(card, 0, start, end, with_adds, frbus, delta=True)    
 
 print(dynamic)
+print(type(dynamic.index))
