@@ -30,8 +30,8 @@ end_long = end + 4*10
 cbo = read_gdp(card.loc[run, "cbo_path"])
 cbo = cbo.loc[start:end]
 cbo['TPN_ts'] = ts["liab_iit_net"] / cbo["gdp"]
-cbo['TCIN_cs'] = cs["TCIN"] / cbo["gdp"]
-#cbo['TCIN_cs'] = cbo["rev_corp"] / cbo["gdp"]
+#cbo['TCIN_cs'] = cs["TCIN"] / cbo["gdp"]
+cbo['TCIN_cs'] = cbo["rev_corp"] / cbo["gdp"]
 cbo['gfsrpn_cbo'] = (cbo["rev"] - cbo["outlays"]) / cbo["gdp"]
 
 start = start.asfreq('Q') - 3
@@ -68,14 +68,15 @@ longbase.loc[start:, "dmptr"] = 0
 longbase.loc[start:, "dmptrsh"] = 0
 
 with_adds = frbus.init_trac(start, end, longbase)
-with_adds.loc[start:end, "tpn_t"] = (TPN_fs + 
-    with_adds.loc[start:end, "egsln"] + with_adds.loc[start:end, "egsen"] +
-    TCIN_fs - with_adds.loc[start:end, "tcin"])
-with_adds.loc[start:end, "tcin_t"] = TCIN_fs
+
+#with_adds.loc[start:end, "tpn_t"] = (TPN_fs + 
+#    with_adds.loc[start:end, "egsln"] + with_adds.loc[start:end, "egsen"] +
+#    TCIN_fs - with_adds.loc[start:end, "tcin"])
+with_adds.loc[start:end, "tpn_t"] = TPN_fs * 1.25
+with_adds.loc[start:end, "tcin_t"] = with_adds.loc[start:end, "tcin"] #TCIN_fs
 with_adds.loc[start:end, "xgdpn_t"] = with_adds.loc[start:end, "xgdpn"]
 with_adds.loc[start:end, "gfsrpn_t"] = gfsrpn_dent
 
-print(with_adds.loc[start:end, ["tcin", "tcin_t", "tpn", "tpn_t"]])
 
 out = frbus.mcontrol(start, end, with_adds, 
     targ=["tpn", "tcin", "xgdpn", "gfsrpn"], 
@@ -93,5 +94,5 @@ outpath = f"/gpfs/gibbs/project/sarin/shared/model_data/FRBUS/Baselines/{stamp}"
 if not os.path.exists(outpath):
     os.makedirs(outpath)
 
-#longbase.to_csv(os.path.join(outpath, "LONGBASE.TXT"), index=False)
+longbase.to_csv(os.path.join(outpath, "LONGBASE.TXT"), index=False)
 
