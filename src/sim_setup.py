@@ -112,7 +112,8 @@ def calc_tcin_path(card: DataFrame, run: int, data: DataFrame, card_dates = Fals
         end = cs.index[len(cs)-1]
 
     cbo = read_gdp(card.loc[run, "cbo_path"])
-    cbo = cbo.loc[start.year:end.year]
+    cbo = cbo.loc[start:end]
+    cs = cs.loc[start:end]
     cbo['TCIN_cs'] = cs["TCIN"] / cbo["gdp"]
 
     start = start.asfreq('Q') - 3
@@ -127,7 +128,7 @@ def calc_tcin_path(card: DataFrame, run: int, data: DataFrame, card_dates = Fals
     
     return(TCIN_fs)
 
-def dynamic_rev(card: DataFrame, run: int, start: Union[str, Period], end: Union[str, Period], data: DataFrame,  frbus: Frbus, delta=False):
+def dynamic_rev(card: DataFrame, run: int, start: Period, end: Period, data: DataFrame,  frbus: Frbus, delta=False):
     cbo = read_gdp(card.loc[run, "cbo_path"])
     start_cbo = pandas.Period(str(start.year), freq="Y")
     end_cbo = pandas.Period(str(end.year), freq="Y")
@@ -137,17 +138,27 @@ def dynamic_rev(card: DataFrame, run: int, start: Union[str, Period], end: Union
         data.loc[start:end, "trci_t"] = (data.loc[start:end, "tcin_d"] + calc_tcin_path(card, run, data, True)) / data.loc[start:end, "ynicpn"]
 
     else:
-        data.loc[start:end, "TRP_fs"] = (calc_tpn_path(card, run, data, True)) / (data.loc[start:end, "ypn"] - data.loc[start:end, "gtn"])
-        data.loc[start:end, "TRCI_fs"] = (calc_tcin_path(card, run, data, True)) / data.loc[start:end, "ynicpn"]
+        data.loc[start:end, "trp_t"] = (calc_tpn_path(card, run, data, True)) / (data.loc[start:end, "ypn"] - data.loc[start:end, "gtn"])
+        data.loc[start:end, "trci_t"] = (calc_tcin_path(card, run, data, True)) / data.loc[start:end, "ynicpn"]
     
-    print(data.loc[start:end, ["trci","trci_t"]])
-
     sim = frbus.mcontrol(start, end, data, targ=["trp", "trci"], traj=["trp_t", "trci_t"], inst=["trp_aerr", "trci_aerr"])
 
-    TPN_dynamic = (sim.loc[start:end, "tpn"].groupby(sim.index.year).sum()) * (cbo.loc[start_cbo:end_cbo,"gdp"]/data.loc[start:end, "xgdpn"].groupby(data.index.year).sum())
-    TPN_dynamic.index = cbo.index
+    data_yr = data.groupby(data.index.year).sum()
+    sim_yr  = sim.groupby(sim.index.year).sum()
 
-    return(TPN_dynamic)
+    cbo = cbo.loc[start_cbo:end_cbo,]
+    data_yr = data_yr.loc[start.year:end.year,]
+    sim_yr = sim_yr.loc[start.year:end.year,]
+
+    cbo.index = data_yr.index
+
+    dynamic = pandas.DataFrame()
+    dynamic["TPN"] =  sim_yr["tpn"] * (cbo["gdp"]/data_yr["xgdpn"])
+    dynamic["TCIN"] = sim_yr["tcin"] * (cbo["gdp"]/data_yr["xgdpn"])
+
+    dynamic.index = pandas.PeriodIndex(dynamic.index, freq = "Y")
+
+    return(dynamic)
 
 def denton_boot(TPN_ts: array):
     #---------------------------------------------------------------------
