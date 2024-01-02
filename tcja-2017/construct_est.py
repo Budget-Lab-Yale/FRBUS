@@ -22,7 +22,7 @@ from punchcard import parse_tax_sim, read_gdp, parse_corp_sim
 ct = datetime.datetime.now()
 stamp = str(ct.year)+str(ct.month)+str(ct.day)+str(ct.hour)
 
-card = read_csv("/gpfs/gibbs/project/sarin/ser68/TCJA/Dynamic_rev_est/base10_card.csv")
+card = read_csv("/gpfs/gibbs/project/sarin/ser68/FRBUS/tcja-2017/base10_card.csv")
 
 ### STEP 1A: Disaggregate Tax Sim revenue series ###
 
@@ -35,7 +35,7 @@ frbus = Frbus("/gpfs/gibbs/project/sarin/shared/conda_pkgs/pyfrbus/models/model.
 
 ### STEP 2: Interpolate CBO/JCT deltas ###
 
-cbo_delta = read_csv("/gpfs/gibbs/project/sarin/ser68/TCJA/Dynamic_rev_est/Deltas/jct_delta.csv")
+cbo_delta = read_csv("/gpfs/gibbs/project/sarin/ser68/FRBUS/tcja-2017/Deltas/jct_delta.csv")
 
 # If you want to use the delta with the foriegn income stuff added, change trci_delta to trci_delta_alt
 tpn_delta = (denton_boot(cbo_delta["tpn_delta"].to_numpy()))
@@ -81,48 +81,17 @@ print(type(dynamic.index))
 
 #### STEP 4: ESTIMATE BASELINE FOR CALCULATION OF DELTA ####
 
-## OPTION 1: Use Build Baseline output from Josh ##
-# Here just taking existing longbase file that Josh created using this program #
-
-baseline_q = load_data(os.path.join("/gpfs/gibbs/project/sarin/shared/model_data/FRBUS/Baselines", str(card.loc[0, "lb_vintage"]), "LONGBASE.TXT"))
-
-## Make annual ##
-baseline_yr  = baseline_q.groupby(baseline_q.index.year).sum()
-baseline_yr = baseline_yr.loc[start.year:end.year,]
-
-
-## Making same magnitude as dynamic estimates ##
-
-# First load CBO and with_adds data #
+# First load with_adds data for conventional scores #
 data_yr = with_adds.groupby(with_adds.index.year).sum()
 data_yr = data_yr.loc[start.year:end.year,]
 
-cbo = read_gdp(card.loc[0, "cbo_path"])
-cbo = cbo.loc[start.asfreq('Y'):end.asfreq('Y'),]
-cbo.index = data_yr.index
-
-baseline = pandas.DataFrame()
-baseline["TPN"] =  baseline_yr["tpn"] * (cbo["gdp"]/data_yr["xgdpn"])
-baseline["TCIN"] = baseline_yr["tcin"] * (cbo["gdp"]/data_yr["xgdpn"])
-baseline.index = dynamic.index
-
 delta = pandas.DataFrame()
-delta["TPN_delta_v1"] =  dynamic["TPN"] - baseline["TPN"]
-delta["TCIN_delta_v1"] =  dynamic["TCIN"] - baseline["TCIN"]
-delta.index = baseline.index
-delta["rev_delta_v1"] = delta["TPN_delta_v1"] + delta["TCIN_delta_v1"]
-
-print(delta)
-
-## OPTION 2: Use dynamic revenue estimate w/o deltas! ##
-# My prefered method -- uses Josh's dynamic revenue estimate w/o the jct deltas #
-
 dynamic_baseline = dynamic_rev(card, 0, start, end, with_adds, frbus, delta=False)    
 
-delta["TPN_delta_v2"] =  dynamic["TPN"] - dynamic_baseline["TPN"]
-delta["TCIN_delta_v2"] =  dynamic["TCIN"] - dynamic_baseline["TCIN"]
+delta["TPN_delta"] =  dynamic["TPN"] - dynamic_baseline["TPN"]
+delta["TCIN_delta"] =  dynamic["TCIN"] - dynamic_baseline["TCIN"]
 
-delta["rev_delta_v2"] = delta["TPN_delta_v2"] + delta["TCIN_delta_v2"]
+delta["rev_delta"] = delta["TPN_delta"] + delta["TCIN_delta"]
 
 print(delta)
 # Note that this version of delta gives a value of 0 in 2017 which is 
@@ -140,7 +109,7 @@ delta["conven_revenue"] = delta["conven_tpn"] + delta["conven_tcin"]
 #### STEP 6: Print delta dataframe ####
 
 delta["conven_revenue"] = delta["conven_tpn"] + delta["conven_tcin"]
-delta.to_csv("/gpfs/gibbs/project/sarin/ser68/TCJA/Dynamic_rev_est/output/revenue_deltas.csv")
+delta.to_csv("/gpfs/gibbs/project/sarin/ser68/FRBUS/tcja-2017/output/revenue_deltas.csv")
 
 
 
