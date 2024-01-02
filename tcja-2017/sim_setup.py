@@ -179,6 +179,20 @@ def dynamic_rev(card: DataFrame, run: int, start: Period, end: Period, data: Dat
     dynamic["TPN"] =  sim_yr["tpn"] * (cbo["gdp"]/data_yr["xgdpn"])
     dynamic["TCIN"] = sim_yr["tcin"] * (cbo["gdp"]/data_yr["xgdpn"])
 
+    ### Adding other variables of interest for output ####
+
+    # Tax rates #
+    dynamic["TRP"] = sim_yr["trp"]
+    dynamic["TRCI"] = sim_yr["trci"]
+
+    # Labor Force Variables #
+    dynamic["LUR"] = sim_yr["lur"] # unemployment rate 
+    dynamic["LFPR"] = sim_yr["lfpr"] # labor force participation rate
+    dynamic["LEH"] = sim_yr["leh"] # civilian employment
+
+    # Inflation #
+    dynamic["PICNIA"] = sim_yr["picnia"] # PCE inflation rate
+
     dynamic.index = pandas.PeriodIndex(dynamic.index, freq = "Y")
 
     return(dynamic)
