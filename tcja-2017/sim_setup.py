@@ -169,6 +169,8 @@ def dynamic_rev(card: DataFrame, run: int, start: Period, end: Period, data: Dat
     data_yr = data.groupby(data.index.year).sum()
     sim_yr  = sim.groupby(sim.index.year).sum()
 
+    sim_yr_avg  = sim.groupby(sim.index.year).mean() #for variables not converted between CBO/FRBUS $
+
     cbo = cbo.loc[start.asfreq('Y'):end.asfreq('Y'),]
     data_yr = data_yr.loc[start.year:end.year,]
     sim_yr = sim_yr.loc[start.year:end.year,]
@@ -182,16 +184,16 @@ def dynamic_rev(card: DataFrame, run: int, start: Period, end: Period, data: Dat
     ### Adding other variables of interest for output ####
 
     # Tax rates #
-    dynamic["TRP"] = sim_yr["trp"]
-    dynamic["TRCI"] = sim_yr["trci"]
+    dynamic["TRP"] = sim_yr_avg["trp"]
+    dynamic["TRCI"] = sim_yr_avg["trci"]
 
     # Labor Force Variables #
-    dynamic["LUR"] = sim_yr["lur"] # unemployment rate 
-    dynamic["LFPR"] = sim_yr["lfpr"] # labor force participation rate
-    dynamic["LEH"] = sim_yr["leh"] # civilian employment
+    dynamic["LUR"] = sim_yr_avg["lur"] # unemployment rate 
+    dynamic["LFPR"] = sim_yr_avg["lfpr"] # labor force participation rate
+    dynamic["LEH"] = sim_yr_avg["leh"] # civilian employment
 
     # Inflation #
-    dynamic["PICNIA"] = sim_yr["picnia"] # PCE inflation rate
+    dynamic["PICNIA"] = sim_yr_avg["picnia"] # PCE inflation rate
 
     dynamic.index = pandas.PeriodIndex(dynamic.index, freq = "Y")
 
