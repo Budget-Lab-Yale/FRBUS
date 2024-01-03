@@ -1,0 +1,105 @@
+---
+title: "comparison_charts"
+output:
+  pdf_document: default
+  html_document: default
+date: "2024-01-03"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+library(readr)
+library(ggplot2)
+```
+
+
+```{r Import Datasets, message=FALSE}
+
+dynamic <- read_csv("dynamic_econ.csv", show_col_types = FALSE)
+dynamic_int <- read_csv("dynamic_econ_int.csv", show_col_types = FALSE)
+baseline <- read_csv("baseline_econ.csv", show_col_types = FALSE)
+
+colnames(dynamic)[c(1)] <- c("year")
+colnames(baseline)[c(1)] <- c("year")
+
+```
+
+# Tax Rates
+
+### Personal Rate
+
+```{r plot personal income tax rate}
+
+ggplot() +
+  geom_line(data = dynamic, aes(x = year, y = TRP, color = "Dynamic")) +
+  geom_line(data = baseline, aes(x = year, y = TRP, color = "Baseline")) +
+  labs(title = "Personal Income Tax Rate", x = "Year", y = "Rate") +
+  scale_color_manual(values = c("Dynamic" = "blue", "Baseline" = "red")) +
+  theme(plot.title = element_text(hjust = 0.5)) +
+  scale_x_continuous(breaks = 2017:2027, labels = as.character(2017:2027))
+
+```
+
+### Corporate Rate
+
+```{r plot Corporate tax rate}
+
+ggplot() +
+  geom_line(data = dynamic, aes(x = year, y = TRCI, color = "Dynamic")) +
+  geom_line(data = baseline, aes(x = year, y = TRCI, color = "Baseline")) +
+  labs(title = "Corporate Tax Rate", x = "Year", y = "Rate") +
+  scale_color_manual(values = c("Dynamic" = "blue", "Baseline" = "red")) +
+  theme(plot.title = element_text(hjust = 0.5)) +
+  scale_x_continuous(breaks = 2017:2027, labels = as.character(2017:2027))
+
+```
+
+
+# Labor Force Variables
+
+### LFPR 
+
+```{r plot LFPR}
+
+ggplot() +
+  geom_line(data = dynamic, aes(x = year, y = LFPR, color = "Dynamic")) +
+  geom_line(data = baseline, aes(x = year, y = LFPR, color = "Baseline")) +
+  labs(title = "LFPR", x = "Year", y = "Rate") +
+  scale_color_manual(values = c("Dynamic" = "blue", "Baseline" = "red")) +
+  theme(plot.title = element_text(hjust = 0.5)) +
+  scale_x_continuous(breaks = 2017:2027, labels = as.character(2017:2027))
+
+```
+
+### Unemployment Rate
+
+```{r plot u rate}
+
+ggplot() +
+  geom_line(data = dynamic, aes(x = year, y = LUR, color = "Dynamic")) +
+  geom_line(data = baseline, aes(x = year, y = LUR, color = "Baseline")) +
+  labs(title = "Unemployment Rate", x = "Year", y = "Percent") +
+  scale_color_manual(values = c("Dynamic" = "blue", "Baseline" = "red")) +
+  theme(plot.title = element_text(hjust = 0.5)) +
+  scale_x_continuous(breaks = 2017:2027, labels = as.character(2017:2027))
+
+```
+
+
+# Inflation
+
+### PCE Inflation
+
+```{r plot pce inflation}
+
+ggplot() +
+  geom_line(data = dynamic, aes(x = year, y = PICNIA, color = "Dynamic")) +
+  geom_line(data = baseline, aes(x = year, y = PICNIA, color = "Baseline")) +
+  labs(title = "PCE Inflation", x = "Year", y = "Percent") +
+  scale_color_manual(values = c("Dynamic" = "blue", "Baseline" = "red")) +
+  theme(plot.title = element_text(hjust = 0.5)) +
+  scale_x_continuous(breaks = 2017:2027, labels = as.character(2017:2027))
+
+```
+
+

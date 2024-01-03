@@ -111,7 +111,9 @@ delta["conven_revenue"] = delta["conven_tpn"] + delta["conven_tcin"]
 delta["conven_revenue"] = delta["conven_tpn"] + delta["conven_tcin"]
 delta.to_csv("/gpfs/gibbs/project/sarin/ser68/FRBUS/tcja-2017/output/revenue_deltas.csv")
 
-
+# Print economic variables for analysis #
+dynamic.to_csv("/gpfs/gibbs/project/sarin/ser68/FRBUS/tcja-2017/output/dynamic_econ.csv")
+dynamic_baseline.to_csv("/gpfs/gibbs/project/sarin/ser68/FRBUS/tcja-2017/output/baseline_econ.csv")
 
 
 
