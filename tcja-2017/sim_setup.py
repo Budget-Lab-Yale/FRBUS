@@ -174,6 +174,7 @@ def dynamic_rev(card: DataFrame, run: int, start: Period, end: Period, data: Dat
     cbo = cbo.loc[start.asfreq('Y'):end.asfreq('Y'),]
     data_yr = data_yr.loc[start.year:end.year,]
     sim_yr = sim_yr.loc[start.year:end.year,]
+    sim_yr_avg = sim_yr_avg.loc[start.year:end.year,]
 
     cbo.index = data_yr.index
 
@@ -215,6 +216,12 @@ def dynamic_rev(card: DataFrame, run: int, start: Period, end: Period, data: Dat
 
     # Inflation #
     dynamic["PICNIA"] = sim_yr_avg["picnia"] # PCE inflation rate
+
+    # Interest Rates #
+    dynamic["RFF"] = sim_yr_avg["rff"] # Fed Funds Rate
+    dynamic["RTB"] = sim_yr_avg["rtb"] # 3 month treasury bill
+    dynamic["RG10"] = sim_yr_avg["rg10"] # 10-yr rate
+
 
     dynamic.index = pandas.PeriodIndex(dynamic.index, freq = "Y")
 
