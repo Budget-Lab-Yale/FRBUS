@@ -183,9 +183,30 @@ def dynamic_rev(card: DataFrame, run: int, start: Period, end: Period, data: Dat
 
     ### Adding other variables of interest for output ####
 
+    # Real GDP and its components #
+    dynamic["XGDP"] = sim_yr["xgdp"] * (cbo["gdp"]/data_yr["xgdpn"]) # Real GDP
+    dynamic["ECNIA"] = sim_yr["ecnia"] * (cbo["gdp"]/data_yr["xgdpn"]) # PCE
+    dynamic["EBFI"] = sim_yr["ebfi"] * (cbo["gdp"]/data_yr["xgdpn"]) # Bus Fixed Investment
+    dynamic["EH"] = sim_yr["eh"] * (cbo["gdp"]/data_yr["xgdpn"]) # Residential investment
+    dynamic["EGFE"] = sim_yr["egfe"] * (cbo["gdp"]/data_yr["xgdpn"]) # Fed govnt expenditures
+    dynamic["EGSE"] = sim_yr["egse"] * (cbo["gdp"]/data_yr["xgdpn"]) # S&l govnt expenditures
+    dynamic["EM"] = sim_yr["em"] * (cbo["gdp"]/data_yr["xgdpn"]) # Imports
+    dynamic["EX"] = sim_yr["ex"] * (cbo["gdp"]/data_yr["xgdpn"]) # exports
+
+    # Government Surplus and components #
+    dynamic["GFSRPN"] = sim_yr["gfsrpn"] * (cbo["gdp"]/data_yr["xgdpn"]) # Fed govnt surplus
+    dynamic["GTN"] = sim_yr["gtn"] * (cbo["gdp"]/data_yr["xgdpn"]) # Fed net transfer
+    dynamic["GFINTN"] = sim_yr["gfintn"] * (cbo["gdp"]/data_yr["xgdpn"]) # Fed net interest
+    dynamic["EGFLN"] = sim_yr["egfln"] * (cbo["gdp"]/data_yr["xgdpn"]) # Fed employee comp
+    dynamic["EGFEN"] = sim_yr["egfen"] * (cbo["gdp"]/data_yr["xgdpn"]) # Nominal Fed govnt expenditures
+
     # Tax rates #
     dynamic["TRP"] = sim_yr_avg["trp"]
     dynamic["TRCI"] = sim_yr_avg["trci"]
+
+    # Tax Base #
+    dynamic["TRP_Base"] = (sim_yr["ypn"] - sim_yr["gtn"]) * (cbo["gdp"]/data_yr["xgdpn"])
+    dynamic["TRCI_Base"] = sim_yr["ynicpn"] * (cbo["gdp"]/data_yr["xgdpn"])
 
     # Labor Force Variables #
     dynamic["LUR"] = sim_yr_avg["lur"] # unemployment rate 
