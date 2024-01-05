@@ -184,6 +184,7 @@ def dynamic_rev(card: DataFrame, run: int, start: Period, end: Period, data: Dat
 
     ### Adding other variables of interest for output ####
 
+
     # Real GDP and its components #
     dynamic["XGDP"] = sim_yr["xgdp"] * (cbo["gdp"]/data_yr["xgdpn"]) # Real GDP
     dynamic["ECNIA"] = sim_yr["ecnia"] * (cbo["gdp"]/data_yr["xgdpn"]) # PCE
@@ -204,6 +205,9 @@ def dynamic_rev(card: DataFrame, run: int, start: Period, end: Period, data: Dat
     # Tax rates #
     dynamic["TRP"] = sim_yr_avg["trp"]
     dynamic["TRCI"] = sim_yr_avg["trci"]
+
+    dynamic["TRP_t"] = sim_yr_avg["trp_t"]
+    dynamic["TRCI_t"] = sim_yr_avg["trci_t"]
 
     # Tax Base #
     dynamic["TRP_Base"] = (sim_yr["ypn"] - sim_yr["gtn"]) * (cbo["gdp"]/data_yr["xgdpn"])

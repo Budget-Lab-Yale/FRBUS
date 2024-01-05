@@ -91,7 +91,9 @@ dynamic_baseline = dynamic_rev(card, 0, start, end, with_adds, frbus, delta=Fals
 delta["TPN_delta"] =  dynamic["TPN"] - dynamic_baseline["TPN"]
 delta["TCIN_delta"] =  dynamic["TCIN"] - dynamic_baseline["TCIN"]
 
-delta["rev_delta"] = delta["TPN_delta"] + delta["TCIN_delta"]
+#delta["rev_delta"] = delta["TPN_delta"] + delta["TCIN_delta"]
+
+delta["rev_delta"] = dynamic["GFSRPN"] - dynamic_baseline["GFSRPN"]
 
 print(delta)
 # Note that this version of delta gives a value of 0 in 2017 which is 
@@ -115,5 +117,9 @@ delta.to_csv("/gpfs/gibbs/project/sarin/ser68/FRBUS/tcja-2017/output/revenue_del
 dynamic.to_csv("/gpfs/gibbs/project/sarin/ser68/FRBUS/tcja-2017/output/dynamic_econ.csv")
 dynamic_baseline.to_csv("/gpfs/gibbs/project/sarin/ser68/FRBUS/tcja-2017/output/baseline_econ.csv")
 
+
+
+#### STEP A-1: Checking that the backed out trax rates are correct ####
+# I.E. checking that the tax rates used applied to the baseline give the conventional score #
 
 
