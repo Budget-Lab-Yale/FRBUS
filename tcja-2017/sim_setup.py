@@ -157,8 +157,8 @@ def dynamic_rev(card: DataFrame, run: int, start: Period, end: Period, data: Dat
     #end_cbo = pandas.Period(str(end.year), freq="Y")
 
     if delta:
-        data.loc[start:end, "trp_t"] = ((data.loc[start:end, "tpn_d"] + calc_tpn_path(card, run, data, True)) / (data.loc[start:end, "ypn"] - data.loc[start:end, "gtn"]))
-        data.loc[start:end, "trci_t"] = (data.loc[start:end, "tcin_d"] + calc_tcin_path(card, run, data, True)) / data.loc[start:end, "ynicpn"]
+        data.loc[start:end, "trp_t"] = ((data.loc[start:end, "tpn_d"]*4 + calc_tpn_path(card, run, data, True)) / (data.loc[start:end, "ypn"] - data.loc[start:end, "gtn"]))
+        data.loc[start:end, "trci_t"] = (data.loc[start:end, "tcin_d"]*4 + calc_tcin_path(card, run, data, True)) / data.loc[start:end, "ynicpn"]
 
     else:
         data.loc[start:end, "trp_t"] = (calc_tpn_path(card, run, data, True)) / (data.loc[start:end, "ypn"] - data.loc[start:end, "gtn"])
@@ -210,8 +210,11 @@ def dynamic_rev(card: DataFrame, run: int, start: Period, end: Period, data: Dat
     dynamic["TRCI_t"] = sim_yr_avg["trci_t"]
 
     # Tax Base #
-    dynamic["TRP_Base"] = (sim_yr["ypn"] - sim_yr["gtn"]) * (cbo["gdp"]/data_yr["xgdpn"])
-    dynamic["TRCI_Base"] = sim_yr["ynicpn"] * (cbo["gdp"]/data_yr["xgdpn"])
+    #dynamic["TRP_Base"] = (sim_yr["ypn"] - sim_yr["gtn"]) * (cbo["gdp"]/data_yr["xgdpn"])
+    #dynamic["TRCI_Base"] = sim_yr["ynicpn"] * (cbo["gdp"]/data_yr["xgdpn"])
+
+    dynamic["TRP_Base"] = (sim_yr_avg["ypn"] - sim_yr_avg["gtn"]) 
+    dynamic["TRCI_Base"] = sim_yr_avg["ynicpn"] 
 
     # Labor Force Variables #
     dynamic["LUR"] = sim_yr_avg["lur"] # unemployment rate 
