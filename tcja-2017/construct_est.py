@@ -52,9 +52,9 @@ trci_delta[0:4] = 0
 start = pandas.Period(card.loc[0, "start"], freq="Q")
 end = pandas.Period(card.loc[0, "end"], freq="Q")
 
-data.loc[start:end, 'dfpdbt'] = 0
-data.loc[start:end, 'dfpex'] = 0
-data.loc[start:end, 'dfpsrp'] = 1
+data.loc[start:, 'dfpdbt'] = 0
+data.loc[start:, 'dfpex'] = 1
+data.loc[start:, 'dfpsrp'] = 0
 
 data.loc[start:, "dmpintay"] = 1
 data.loc[start:, "dmptay"] = 0
