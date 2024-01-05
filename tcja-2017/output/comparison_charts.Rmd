@@ -3,7 +3,7 @@ title: "comparison_charts"
 output:
   pdf_document: default
   html_document: default
-date: "2024-01-03"
+date: "2024-01-05"
 ---
 
 ```{r setup, include=FALSE}
@@ -16,12 +16,18 @@ library(ggplot2)
 ```{r Import FRBUS Datasets, message=FALSE}
 
 dynamic <- read_csv("dynamic_econ.csv", show_col_types = FALSE)
+delta <- read_csv("revenue_deltas.csv", show_col_types = FALSE)
+delta_int <- read_csv("revenue_deltas_int.csv", show_col_types = FALSE)
 dynamic_int <- read_csv("dynamic_econ_int.csv", show_col_types = FALSE)
 baseline <- read_csv("baseline_econ.csv", show_col_types = FALSE)
+jct_dynamic <- read_csv("/gpfs/gibbs/project/sarin/ser68/FRBUS/tcja-2017/Deltas/jct_dynamic.csv", show_col_types = FALSE)
 
 colnames(dynamic)[c(1)] <- c("year")
 colnames(dynamic_int)[c(1)] <- c("year")
 colnames(baseline)[c(1)] <- c("year")
+colnames(delta)[c(1)] <- c("year")
+colnames(delta_int)[c(1)] <- c("year")
+colnames(jct_dynamic)[c(1)] <- c("year")
 
 ```
 
@@ -32,6 +38,23 @@ colnames(cbo)[c(1)] <- c("year")
 
 
 ```
+
+# Dyanmic Revenue Estimate
+
+```{r dynamic rev plot}
+
+ggplot() +
+  geom_line(data = delta, aes(x = year, y = rev_delta, color = "FRBUS Dynamic")) +
+  geom_line(data = delta_int, aes(x = year, y = rev_delta, color = "FRBUS Dynamic Int") ) +
+  geom_line(data = jct_dynamic, aes(x = year, y = Dynamic_score_jct, color = "JCT Dyanmic"), linetype = "dashed") +
+  geom_line(data = delta_int, aes(x = year, y = conven_revenue, color = "JCT Conventional Int"), linetype = "dashed") +
+  labs(title = "Dynamic Revenue Score", x = "Year", y = "Bil. ($) Relative to Baseline") +
+  scale_color_manual(values = c("FRBUS Dynamic" = "blue", "FRBUS Dynamic Int" = "red", "JCT Dyanmic" = "black", "JCT Conventional Int" = "gold")) +
+  theme(plot.title = element_text(hjust = 0.5)) +
+  scale_x_continuous(breaks = 2017:2027, labels = as.character(2017:2027))
+
+```
+
 
 
 # Tax Rates and Tax bases
