@@ -59,7 +59,7 @@ ggplot() +
 
 # Tax Rates and Tax bases
 
-### Personal Rate
+### Personal Income Average Tax Rate
 
 ```{r plot personal income tax rate}
 
@@ -74,7 +74,22 @@ ggplot() +
 
 ```
 
-### Corporate Rate
+### Marginal Personal Tax Rate
+
+```{r plot personal income marginal tax rate}
+
+ggplot() +
+  geom_line(data = dynamic, aes(x = year, y = TRFPM, color = "Dynamic")) +
+  geom_line(data = dynamic_int, aes(x = year, y = TRFPM, color = "Dynamic Int")) +
+  geom_line(data = baseline, aes(x = year, y = TRFPM, color = "Baseline"), linetype = "dashed") +
+  labs(title = "Personal Income Marginal Tax Rate", x = "Year", y = "Rate") +
+  scale_color_manual(values = c("Dynamic" = "blue", "Baseline" = "gray", "Dynamic Int" = "red")) +
+  theme(plot.title = element_text(hjust = 0.5)) +
+  scale_x_continuous(breaks = 2017:2027, labels = as.character(2017:2027))
+
+```
+
+### Corporate Average Tax Rate
 
 ```{r plot Corporate tax rate}
 
@@ -83,6 +98,21 @@ ggplot() +
   geom_line(data = dynamic_int, aes(x = year, y = TRCI, color = "Dynamic Int")) +
   geom_line(data = baseline, aes(x = year, y = TRCI, color = "Baseline"), linetype = "dashed") +
   labs(title = "Corporate Tax Rate", x = "Year", y = "Rate") +
+  scale_color_manual(values = c("Dynamic" = "blue", "Baseline" = "gray", "Dynamic Int" = "red")) +
+  theme(plot.title = element_text(hjust = 0.5)) +
+  scale_x_continuous(breaks = 2017:2027, labels = as.character(2017:2027))
+
+```
+
+### Corporate Marginal Tax Rate
+
+```{r plot Corporate income marginal tax rate}
+
+ggplot() +
+  geom_line(data = dynamic, aes(x = year, y = TRFCIM, color = "Dynamic")) +
+  geom_line(data = dynamic_int, aes(x = year, y = TRFCIM, color = "Dynamic Int")) +
+  geom_line(data = baseline, aes(x = year, y = TRFCIM, color = "Baseline"), linetype = "dashed") +
+  labs(title = "Corporate Income Marginal Tax Rate", x = "Year", y = "Rate") +
   scale_color_manual(values = c("Dynamic" = "blue", "Baseline" = "gray", "Dynamic Int" = "red")) +
   theme(plot.title = element_text(hjust = 0.5)) +
   scale_x_continuous(breaks = 2017:2027, labels = as.character(2017:2027))

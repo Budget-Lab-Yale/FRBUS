@@ -52,6 +52,11 @@ def build_data(card: DataFrame, run: int, raw = False, card_dates = False):
     cbo['TPN_ts'] = ts["liab_iit_net"] / cbo["gdp"]
     cbo['TCIN_cs'] = cs["TCIN"] / cbo["gdp"]
 
+    per_mtr = read_csv("/gpfs/gibbs/project/sarin/shared/model_data/FRBUS/tcja-2017/housing_subsidy_rates.csv", index_col=0)
+    per_mtr = per_mtr.loc[2017:2047,:]
+    corp_mtr = read_csv("/gpfs/gibbs/project/sarin/shared/model_data/FRBUS/tcja-2017/mtr_corp_rates.csv", index_col=0)
+    corp_mtr = corp_mtr.loc[2017:2047,:]
+
     start = start.asfreq('Q') - 3
     end = end.asfreq('Q')
 
@@ -63,6 +68,9 @@ def build_data(card: DataFrame, run: int, raw = False, card_dates = False):
 
     TPN_fs = denton_boot(cbo["TPN_ts"].to_numpy())
     TCIN_fs = denton_boot(cbo["TCIN_cs"].to_numpy())
+    TRFPM_fs = (denton_boot(per_mtr["mtr_law2017"].to_numpy())) * -1 *4
+    TRFCIM_fs = denton_boot(corp_mtr["mtr_law2017"].to_numpy()) * 4
+
 
     frbus = Frbus("/gpfs/gibbs/project/sarin/shared/conda_pkgs/pyfrbus/models/model.xml", mce="mcap+wp")
     longbase.loc[start:end, "dfpsrp"] = 1
@@ -89,8 +97,17 @@ def build_data(card: DataFrame, run: int, raw = False, card_dates = False):
     with_adds = frbus.init_trac(start, end, longbase)
     with_adds.loc[start:end, "tpn_t"] = TPN_fs
     with_adds.loc[start:end, "tcin_t"] = TCIN_fs
+    #with_adds.loc[start:end, "trfpm_t"] = TRFPM_fs
+    #with_adds.loc[start:end, "trfcim_t"] = TRFCIM_fs
 
-    out = frbus.mcontrol(start, end, with_adds, targ=["tpn", "tcin"], traj=["tpn_t", "tcin_t"], inst=["trp_aerr", "trci_aerr"])
+    with_adds.loc[start:end, "trfpm"] = TRFPM_fs
+    with_adds.loc[start:end, "trfcim"] = TRFCIM_fs
+
+    out = frbus.mcontrol(start, end, with_adds, \
+        targ=["tpn", "tcin"], \
+        traj=["tpn_t", "tcin_t"], \
+        inst=["trp_aerr", "trci_aerr"])
+
     out = out.filter(regex="^((?!_).)*$")
 
     longbase.loc[start:end,:] = out.loc[start:end,:]
@@ -156,19 +173,30 @@ def dynamic_rev(card: DataFrame, run: int, start: Period, end: Period, data: Dat
     #start_cbo = pandas.Period(str(start.year), freq="Y")
     #end_cbo = pandas.Period(str(end.year), freq="Y")
 
+    per_mtr = read_csv("/gpfs/gibbs/project/sarin/shared/model_data/FRBUS/tcja-2017/housing_subsidy_rates.csv", index_col=0)
+    per_mtr = per_mtr.loc[2017:2027,:]
+    corp_mtr = read_csv("/gpfs/gibbs/project/sarin/shared/model_data/FRBUS/tcja-2017/mtr_corp_rates.csv", index_col=0)
+    corp_mtr = corp_mtr.loc[2017:2027,:]
+
     if delta:
         data.loc[start:end, "trp_t"] = ((data.loc[start:end, "tpn_d"]*4 + calc_tpn_path(card, run, data, True)) / (data.loc[start:end, "ypn"] - data.loc[start:end, "gtn"]))
         data.loc[start:end, "trci_t"] = (data.loc[start:end, "tcin_d"]*4 + calc_tcin_path(card, run, data, True)) / data.loc[start:end, "ynicpn"]
+        data.loc[start:end, "trfpm"] = (denton_boot(per_mtr["mtr_tcja"].to_numpy())) * -1 * 4
+        data.loc[start:end, "trfcim"] = denton_boot(corp_mtr["mtr_tcja"].to_numpy()) * 4
 
     else:
         data.loc[start:end, "trp_t"] = (calc_tpn_path(card, run, data, True)) / (data.loc[start:end, "ypn"] - data.loc[start:end, "gtn"])
         data.loc[start:end, "trci_t"] = (calc_tcin_path(card, run, data, True)) / data.loc[start:end, "ynicpn"]
-    
-    sim = frbus.mcontrol(start, end, data, targ=["trp", "trci"], traj=["trp_t", "trci_t"], inst=["trp_aerr", "trci_aerr"])
+        data.loc[start:end, "trfpm"] = (denton_boot(per_mtr["mtr_law2017"].to_numpy())) * -1 * 4
+        data.loc[start:end, "trfcim"] = denton_boot(corp_mtr["mtr_law2017"].to_numpy()) * 4
+
+    sim = frbus.mcontrol(start, end, data, \
+        targ=["trp", "trci"], \
+        traj=["trp_t", "trci_t"], \
+        inst=["trp_aerr", "trci_aerr"])
 
     data_yr = data.groupby(data.index.year).sum()
     sim_yr  = sim.groupby(sim.index.year).sum()
-
     sim_yr_avg  = sim.groupby(sim.index.year).mean() #for variables not converted between CBO/FRBUS $
 
     cbo = cbo.loc[start.asfreq('Y'):end.asfreq('Y'),]
@@ -208,6 +236,9 @@ def dynamic_rev(card: DataFrame, run: int, start: Period, end: Period, data: Dat
 
     dynamic["TRP_t"] = sim_yr_avg["trp_t"]
     dynamic["TRCI_t"] = sim_yr_avg["trci_t"]
+
+    dynamic["TRFPM"] = sim_yr_avg["trfpm"]
+    dynamic["TRFCIM"] = sim_yr_avg["trfcim"]
 
     # Tax Base #
     #dynamic["TRP_Base"] = (sim_yr["ypn"] - sim_yr["gtn"]) * (cbo["gdp"]/data_yr["xgdpn"])
