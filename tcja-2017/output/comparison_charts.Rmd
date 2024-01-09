@@ -57,7 +57,7 @@ ggplot() +
 
 
 
-# Tax Rates and Tax bases
+# Personal Income Tax variables
 
 ### Personal Income Average Tax Rate
 
@@ -89,6 +89,26 @@ ggplot() +
 
 ```
 
+### Personal tax base 
+
+```{r plot personal income tax base}
+
+dynamic$trp_base_delta <- (dynamic$TRP_Base/baseline$TRP_Base -1)*100
+dynamic_int$trp_base_delta <- (dynamic_int$TRP_Base/baseline$TRP_Base -1)*100
+
+ggplot() +
+  geom_line(data = dynamic, aes(x = year, y = trp_base_delta, color = "Dynamic")) +
+  geom_line(data = dynamic_int, aes(x = year, y = trp_base_delta, color = "Dynamic Int")) +
+  labs(title = "Personal Income Tax Base", x = "Year", y = "Percent Difference from Baseline") +
+  scale_color_manual(values = c("Dynamic" = "blue", "Dynamic Int" = "red")) +
+  theme(plot.title = element_text(hjust = 0.5)) +
+  scale_x_continuous(breaks = 2017:2027, labels = as.character(2017:2027))
+
+```
+
+
+# Coporate Income Tax Variables 
+
 ### Corporate Average Tax Rate
 
 ```{r plot Corporate tax rate}
@@ -114,23 +134,6 @@ ggplot() +
   geom_line(data = baseline, aes(x = year, y = TRFCIM, color = "Baseline"), linetype = "dashed") +
   labs(title = "Corporate Income Marginal Tax Rate", x = "Year", y = "Rate") +
   scale_color_manual(values = c("Dynamic" = "blue", "Baseline" = "gray", "Dynamic Int" = "red")) +
-  theme(plot.title = element_text(hjust = 0.5)) +
-  scale_x_continuous(breaks = 2017:2027, labels = as.character(2017:2027))
-
-```
-
-### Personal tax base 
-
-```{r plot personal income tax base}
-
-dynamic$trp_base_delta <- (dynamic$TRP_Base/baseline$TRP_Base -1)*100
-dynamic_int$trp_base_delta <- (dynamic_int$TRP_Base/baseline$TRP_Base -1)*100
-
-ggplot() +
-  geom_line(data = dynamic, aes(x = year, y = trp_base_delta, color = "Dynamic")) +
-  geom_line(data = dynamic_int, aes(x = year, y = trp_base_delta, color = "Dynamic Int")) +
-  labs(title = "Personal Income Tax Base", x = "Year", y = "Percent Difference from Baseline") +
-  scale_color_manual(values = c("Dynamic" = "blue", "Dynamic Int" = "red")) +
   theme(plot.title = element_text(hjust = 0.5)) +
   scale_x_continuous(breaks = 2017:2027, labels = as.character(2017:2027))
 
@@ -293,6 +296,23 @@ ggplot() +
 
 ### Business Fixed Investment
 
+### User Cost of Capital For Business Investment
+
+```{r plot cost of capital buss investment}
+
+ggplot() +
+  geom_line(data = dynamic, aes(x = year, y = RTBFI, color = "Dynamic")) +
+  geom_line(data = dynamic_int, aes(x = year, y = RTBFI, color = "Dynamic Int")) +
+  geom_line(data = baseline, aes(x = year, y = RTBFI, color = "Baseline"), linetype = "dashed") +
+  labs(title = "Cost of Capital for Business Investment", x = "Year", y = "Rate") +
+  scale_color_manual(values = c("Dynamic" = "blue", "Baseline" = "gray", "Dynamic Int" = "red")) +
+  theme(plot.title = element_text(hjust = 0.5)) +
+  scale_x_continuous(breaks = 2017:2027, labels = as.character(2017:2027))
+
+```
+
+### Business Fixed Investment
+
 ```{r Business fixed investment}
 
 dynamic$bfi_delta <- (dynamic$EBFI/baseline$EBFI -1)*100
@@ -311,6 +331,23 @@ ggplot() +
 ```
 
 ### Residential Investment
+
+### Real Cost of Capital For Residential Investment
+
+```{r plot cost of capital res investment}
+
+ggplot() +
+  geom_line(data = dynamic, aes(x = year, y = RCCH, color = "Dynamic")) +
+  geom_line(data = dynamic_int, aes(x = year, y = RCCH, color = "Dynamic Int")) +
+  geom_line(data = baseline, aes(x = year, y = RCCH, color = "Baseline"), linetype = "dashed") +
+  labs(title = "Real User Cost of Capital for Residential Investment", x = "Year", y = "Rate") +
+  scale_color_manual(values = c("Dynamic" = "blue", "Baseline" = "gray", "Dynamic Int" = "red")) +
+  theme(plot.title = element_text(hjust = 0.5)) +
+  scale_x_continuous(breaks = 2017:2027, labels = as.character(2017:2027))
+
+```
+
+### Residential Investment 
 
 ```{r Residential investment}
 

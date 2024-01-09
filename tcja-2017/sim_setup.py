@@ -240,6 +240,11 @@ def dynamic_rev(card: DataFrame, run: int, start: Period, end: Period, data: Dat
     dynamic["TRFPM"] = sim_yr_avg["trfpm"]
     dynamic["TRFCIM"] = sim_yr_avg["trfcim"]
 
+    # Cost of investment #
+    dynamic["RCCH"] = sim_yr_avg["rcch"]
+    dynamic["RBFI"] = sim_yr_avg["rbfi"]
+    dynamic["RTBFI"] = sim_yr_avg["rtbfi"]
+
     # Tax Base #
     #dynamic["TRP_Base"] = (sim_yr["ypn"] - sim_yr["gtn"]) * (cbo["gdp"]/data_yr["xgdpn"])
     #dynamic["TRCI_Base"] = sim_yr["ynicpn"] * (cbo["gdp"]/data_yr["xgdpn"])
