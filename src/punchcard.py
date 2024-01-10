@@ -29,7 +29,7 @@ def parse_corp_sim(card: DataFrame, run: int) -> DataFrame:
     cs.index = pandas.PeriodIndex(cs.index, freq="Y")
     return(cs)
 
-def read_gdp(path: str):
+def read_macro(path: str):
     base = pandas.read_csv(os.path.join(path, "historical.csv"), index_col=0)
     proj = pandas.read_csv(os.path.join(path, "projections.csv"), index_col=0)
 
