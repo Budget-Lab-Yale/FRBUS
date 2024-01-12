@@ -214,6 +214,7 @@ def dynamic_rev(card: DataFrame, run: int, start: Period, end: Period, data: Dat
 
 
     # Real GDP and its components #
+    dynamic["XGDPN"] = sim_yr["xgdpn"] * (cbo["gdp"]/data_yr["xgdpn"]) # Real GDP
     dynamic["XGDP"] = sim_yr["xgdp"] * (cbo["gdp"]/data_yr["xgdpn"]) # Real GDP
     dynamic["ECNIA"] = sim_yr["ecnia"] * (cbo["gdp"]/data_yr["xgdpn"]) # PCE
     dynamic["EBFI"] = sim_yr["ebfi"] * (cbo["gdp"]/data_yr["xgdpn"]) # Bus Fixed Investment
@@ -222,6 +223,17 @@ def dynamic_rev(card: DataFrame, run: int, start: Period, end: Period, data: Dat
     dynamic["EGSE"] = sim_yr["egse"] * (cbo["gdp"]/data_yr["xgdpn"]) # S&l govnt expenditures
     dynamic["EM"] = sim_yr["em"] * (cbo["gdp"]/data_yr["xgdpn"]) # Imports
     dynamic["EX"] = sim_yr["ex"] * (cbo["gdp"]/data_yr["xgdpn"]) # exports
+
+    # Real GDP component Price Indices #
+    dynamic["PGDP"] = sim_yr_avg["pgdp"]
+    dynamic["PCNIA"] = sim_yr_avg["pcnia"]
+    dynamic["PKBFIR"] = sim_yr_avg["pkbfir"]
+    dynamic["PXP"] = sim_yr_avg["pxp"]
+    dynamic["PHR"] = sim_yr_avg["phr"]
+    dynamic["PEGFR"] = sim_yr_avg["pegfr"]
+    dynamic["PXR"] = sim_yr_avg["pxr"]
+    dynamic["PMO"] = sim_yr_avg["pmo"]
+
 
     # Government Surplus and components #
     dynamic["GFSRPN"] = sim_yr["gfsrpn"] * (cbo["gdp"]/data_yr["xgdpn"]) # Fed govnt surplus
