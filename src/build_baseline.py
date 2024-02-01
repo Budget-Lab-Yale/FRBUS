@@ -7,7 +7,7 @@ import os
 from pyfrbus.load_data import load_data
 from pyfrbus.frbus import Frbus
 from sim_setup import denton_boot
-from punchcard import parse_tax_sim, read_gdp, parse_corp_sim
+from punchcard import parse_tax_sim, read_gdp, parse_corp_etr
 from pyfrbus.sim_lib import sim_plot
 
 card = pandas.read_csv(sys.argv[1])

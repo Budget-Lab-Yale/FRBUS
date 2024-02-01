@@ -8,8 +8,7 @@ from numpy import array
 from typing import Union
 from pyfrbus.load_data import load_data
 from pyfrbus.frbus import Frbus
-from punchcard import parse_tax_sim, read_gdp, parse_corp_sim
-
+from punchcard import parse_tax_sim, read_macro, parse_corp_mtr
 
 def levers(card: DataFrame, start: Union[str, Period], end: Union[str, Period], data: DataFrame, run: int):
     data.loc[start:end, "dfpdbt"] = card.loc[run, "dfpdbt"]
@@ -45,16 +44,16 @@ def build_data(card: DataFrame, run: int, raw = False, card_dates = False):
         start = ts.index[0]
         end = ts.index[len(ts)-1]
 
-    cs = parse_corp_sim(card, run)
+    #cs = parse_corp_sim(card, run)
     
-    cbo = read_gdp(card.loc[run, "cbo_path"])
-    cbo = cbo.loc[start:end,:]
-    cbo['TPN_ts'] = ts["liab_iit_net"] / cbo["gdp"]
-    cbo['TCIN_cs'] = cs["TCIN"] / cbo["gdp"]
+    macro = read_macro(card.loc[run, "macro_path"])
+    macro = macro.loc[start:end,:]
+    macro['TPN_ts'] = ts["iit_etr"] / macro["gdp"]
+    macro['TCIN_cs'] = ts["revenues_corp_tax"] / macro["gdp"]
 
     per_mtr = read_csv("/gpfs/gibbs/project/sarin/shared/model_data/FRBUS/tcja-2017/housing_subsidy_rates.csv")
     per_mtr = per_mtr.loc[start:end,:]
-    corp_mtr = read_csv("/gpfs/gibbs/project/sarin/shared/model_data/FRBUS/tcja-2017/mtr_corp_rates.csv")
+    corp_mtr = parse_corp_mtr(card, run)
     corp_mtr = corp_mtr.loc[start:end,:]
 
     start = start.asfreq('Q') - 3
@@ -62,15 +61,14 @@ def build_data(card: DataFrame, run: int, raw = False, card_dates = False):
 
     temp = longbase.loc[start:end, "xgdpn"]
     temp = temp.groupby(temp.index.year).sum() 
-    temp.index = cbo.index
-    cbo["TPN_ts"] *= temp
-    cbo["TCIN_cs"] *= temp 
+    temp.index = macro.index
+    macro["TPN_ts"] *= temp
+    macro["TCIN_cs"] *= temp 
 
-    TPN_fs = denton_boot(cbo["TPN_ts"].to_numpy())
-    TCIN_fs = denton_boot(cbo["TCIN_cs"].to_numpy())
-    TRFPM_fs = (denton_boot(per_mtr["mtr_law2017"].to_numpy())) * -1
-    TRFCIM_fs = denton_boot(corp_mtr["mtr_law2017"].to_numpy())
-
+    TPN_fs = denton_boot(macro["TPN_ts"].to_numpy())
+    TCIN_fs = denton_boot(macro["TCIN_cs"].to_numpy())
+    TRFPM_fs = (denton_boot(per_mtr["mtr_law2017"].to_numpy())) * -4
+    TRFCIM_fs = (denton_boot(corp_mtr["corp.rate"].to_numpy())) * 4
 
     frbus = Frbus("/gpfs/gibbs/project/sarin/shared/conda_pkgs/pyfrbus/models/model.xml", mce="mcap+wp")
     longbase.loc[start:end, "dfpsrp"] = 1
@@ -97,13 +95,10 @@ def build_data(card: DataFrame, run: int, raw = False, card_dates = False):
     with_adds = frbus.init_trac(start, end, longbase)
     with_adds.loc[start:end, "tpn_t"] = TPN_fs
     with_adds.loc[start:end, "tcin_t"] = TCIN_fs
-    with_adds.loc[start:end, "trfpm_t"] = TRFPM_fs
-    with_adds.loc[start:end, "trfcim_t"] = TRFCIM_fs
+    with_adds.loc[start:end, "trfpm"] = TRFPM_fs
+    with_adds.loc[start:end, "trfcim"] = TRFCIM_fs
 
-    out = frbus.mcontrol(start, end, with_adds, \
-        targ=["tpn", "tcin", "trfpm", "trfcim"], \
-        traj=["tpn_t", "tcin_t", "trfpm_t", "trfcim_t"], \
-        inst=["trp_aerr", "trci_aerr", "trfpm_aerr", "trfcim_aerr"])
+    out = frbus.mcontrol(start, end, with_adds, targ=["tpn", "tcin"], traj=["tpn_t", "tcin_t"], inst=["trp_aerr", "trci_aerr"])
 
     out = out.filter(regex="^((?!_).)*$")
 
@@ -121,109 +116,107 @@ def calc_tpn_path(card: DataFrame, run: int, data: DataFrame, card_dates = False
         start = ts.index[0]
         end = ts.index[len(ts)-1]
 
-    cbo = read_gdp(card.loc[run, "cbo_path"])
-    cbo = cbo.loc[start:end]
-    cbo['TPN_ts'] = ts["liab_iit_net"] / cbo["gdp"]
+    macro = read_macro(card.loc[run, "macro_path"])
+    macro = macro.loc[start:end]
+    macro['TPN_ts'] = ts["iit_etr"] / macro["gdp"]
     
     start = start.asfreq('Q') - 3
     end = end.asfreq('Q')
 
     temp = data.loc[start:end, "xgdpn"]
     temp = temp.groupby(temp.index.year).sum() 
-    temp.index = cbo.index
-    cbo["TPN_ts"] *= temp
+    temp.index = macro.index
+    macro["TPN_ts"] *= temp
 
-    TPN_fs = (denton_boot(cbo["TPN_ts"].to_numpy()))
+    TPN_fs = (denton_boot(macro["TPN_ts"].to_numpy()))
     
     return(TPN_fs)
 
 def calc_tcin_path(card: DataFrame, run: int, data: DataFrame, card_dates = False):
-    cs = parse_corp_sim(card, run)
+    ts = parse_tax_sim(card, run, False)
 
     if card_dates:
         start = pandas.Period(card.loc[run, "start"][0:4], freq="Y")
         end = pandas.Period(card.loc[run, "end"][0:4], freq="Y")
 
     else:
-        start = cs.index[0]
-        end = cs.index[len(cs)-1]
+        start = ts.index[0]
+        end = ts.index[len(ts)-1]
 
-    cbo = read_gdp(card.loc[run, "cbo_path"])
-    cbo = cbo.loc[start:end]
-    cs = cs.loc[start:end]
-    cbo['TCIN_cs'] = cs["TCIN"] / cbo["gdp"]
+    macro = read_macro(card.loc[run, "macro_path"])
+    macro = macro.loc[start:end]
+    ts = ts.loc[start:end]
+    macro['TCIN_cs'] = ts["revenues_corp_tax"] / macro["gdp"]
 
     start = start.asfreq('Q') - 3
     end = end.asfreq('Q')
 
     temp = data.loc[start:end, "xgdpn"]
     temp = temp.groupby(temp.index.year).sum() 
-    temp.index = cbo.index
-    cbo["TCIN_cs"] *= temp
+    temp.index = macro.index
+    macro["TCIN_cs"] *= temp
 
-    TCIN_fs = (denton_boot(cbo["TCIN_cs"].to_numpy()))
+    TCIN_fs = (denton_boot(macro["TCIN_cs"].to_numpy()))
     
     return(TCIN_fs)
 
 def dynamic_rev(card: DataFrame, run: int, start: Period, end: Period, data: DataFrame,  frbus: Frbus, delta=False):
-    cbo = read_gdp(card.loc[run, "cbo_path"])
-    #start_cbo = pandas.Period(str(start.year), freq="Y")
-    #end_cbo = pandas.Period(str(end.year), freq="Y")
+    macro = read_macro(card.loc[run, "macro_path"])
+    #start_macro = pandas.Period(str(start.year), freq="Y")
+    #end_macro = pandas.Period(str(end.year), freq="Y")
 
     per_mtr = read_csv("/gpfs/gibbs/project/sarin/shared/model_data/FRBUS/tcja-2017/housing_subsidy_rates.csv")
     per_mtr = per_mtr.loc[start.asfreq('Y'):end.asfreq('Y'),:]
-    corp_mtr = read_csv("/gpfs/gibbs/project/sarin/shared/model_data/FRBUS/tcja-2017/mtr_corp_rates.csv")
+    corp_mtr = parse_corp_mtr(card, run)
     corp_mtr = corp_mtr.loc[start.asfreq('Y'):end.asfreq('Y'),:]
 
     if delta:
         data.loc[start:end, "trp_t"] = ((data.loc[start:end, "tpn_d"] + calc_tpn_path(card, run, data, True)) / (data.loc[start:end, "ypn"] - data.loc[start:end, "gtn"]))
         data.loc[start:end, "trci_t"] = (data.loc[start:end, "tcin_d"] + calc_tcin_path(card, run, data, True)) / data.loc[start:end, "ynicpn"]
+        data.loc[start:end, "trfpm"] = (denton_boot(per_mtr["mtr_tcja"].to_numpy())) * -4
+        data.loc[start:end, "trfcim"] = (denton_boot(corp_mtr["corp.rate"].to_numpy())) * 4
 
     else:
         data.loc[start:end, "trp_t"] = (calc_tpn_path(card, run, data, True)) / (data.loc[start:end, "ypn"] - data.loc[start:end, "gtn"])
         data.loc[start:end, "trci_t"] = (calc_tcin_path(card, run, data, True)) / data.loc[start:end, "ynicpn"]
+        data.loc[start:end, "trfpm"] = (denton_boot(per_mtr["mtr_law2017"].to_numpy())) * -4
+        data.loc[start:end, "trfcim"] = (denton_boot(corp_mtr["corp.rate"].to_numpy())) * 4
     
-    data.loc[start:end, "trfpm_t"] = (denton_boot(per_mtr["mtr_tcja"].to_numpy())) * -1
-    data.loc[start:end, "trfcim_t"] = denton_boot(corp_mtr["mtr_tcja"].to_numpy())
-
-    sim = frbus.mcontrol(start, end, data, \
-        targ=["trp", "trci", "trfpm", "trfcim"], \
-        traj=["trp_t", "trci_t", "trfpm_t", "trfcim_t"], \
-        inst=["trp_aerr", "trci_aerr", "trfpm_aerr", "trfcim_aerr"])
+    sim = frbus.mcontrol(start, end, data, targ=["trp", "trci"], traj=["trp_t", "trci_t"], inst=["trp_aerr", "trci_aerr"])
 
     data_yr = data.groupby(data.index.year).sum()
     sim_yr  = sim.groupby(sim.index.year).sum()
-    sim_yr_avg  = sim.groupby(sim.index.year).mean() #for variables not converted between CBO/FRBUS $
+    sim_yr_avg  = sim.groupby(sim.index.year).mean() #for variables not converted between macro/FRBUS $
 
-    cbo = cbo.loc[start.asfreq('Y'):end.asfreq('Y'),]
+    macro = macro.loc[start.asfreq('Y'):end.asfreq('Y'),]
     data_yr = data_yr.loc[start.year:end.year,]
     sim_yr = sim_yr.loc[start.year:end.year,]
     sim_yr_avg = sim_yr_avg.loc[start.year:end.year,]
     
-    cbo.index = data_yr.index
+    macro.index = data_yr.index
 
     dynamic = pandas.DataFrame()
-    dynamic["TPN"] =  sim_yr["tpn"] * (cbo["gdp"]/data_yr["xgdpn"])
-    dynamic["TCIN"] = sim_yr["tcin"] * (cbo["gdp"]/data_yr["xgdpn"])
+    dynamic["TPN"] =  sim_yr["tpn"] * (macro["gdp"]/data_yr["xgdpn"])
+    dynamic["TCIN"] = sim_yr["tcin"] * (macro["gdp"]/data_yr["xgdpn"])
 
     ### Adding other variables of interest for output ####
 
     # Real GDP and its components #
-    dynamic["XGDP"] = sim_yr["xgdp"] * (cbo["gdp"]/data_yr["xgdpn"]) # Real GDP
-    dynamic["ECNIA"] = sim_yr["ecnia"] * (cbo["gdp"]/data_yr["xgdpn"]) # PCE
-    dynamic["EBFI"] = sim_yr["ebfi"] * (cbo["gdp"]/data_yr["xgdpn"]) # Bus Fixed Investment
-    dynamic["EH"] = sim_yr["eh"] * (cbo["gdp"]/data_yr["xgdpn"]) # Residential investment
-    dynamic["EGFE"] = sim_yr["egfe"] * (cbo["gdp"]/data_yr["xgdpn"]) # Fed govnt expenditures
-    dynamic["EGSE"] = sim_yr["egse"] * (cbo["gdp"]/data_yr["xgdpn"]) # S&l govnt expenditures
-    dynamic["EM"] = sim_yr["em"] * (cbo["gdp"]/data_yr["xgdpn"]) # Imports
-    dynamic["EX"] = sim_yr["ex"] * (cbo["gdp"]/data_yr["xgdpn"]) # exports
+    dynamic["XGDP"] = sim_yr["xgdp"] * (macro["gdp"]/data_yr["xgdpn"]) # Real GDP
+    dynamic["ECNIA"] = sim_yr["ecnia"] * (macro["gdp"]/data_yr["xgdpn"]) # PCE
+    dynamic["EBFI"] = sim_yr["ebfi"] * (macro["gdp"]/data_yr["xgdpn"]) # Bus Fixed Investment
+    dynamic["EH"] = sim_yr["eh"] * (macro["gdp"]/data_yr["xgdpn"]) # Residential investment
+    dynamic["EGFE"] = sim_yr["egfe"] * (macro["gdp"]/data_yr["xgdpn"]) # Fed govnt expenditures
+    dynamic["EGSE"] = sim_yr["egse"] * (macro["gdp"]/data_yr["xgdpn"]) # S&l govnt expenditures
+    dynamic["EM"] = sim_yr["em"] * (macro["gdp"]/data_yr["xgdpn"]) # Imports
+    dynamic["EX"] = sim_yr["ex"] * (macro["gdp"]/data_yr["xgdpn"]) # exports
 
     # Government Surplus and components #
-    dynamic["GFSRPN"] = sim_yr["gfsrpn"] * (cbo["gdp"]/data_yr["xgdpn"]) # Fed govnt surplus
-    dynamic["GTN"] = sim_yr["gtn"] * (cbo["gdp"]/data_yr["xgdpn"]) # Fed net transfer
-    dynamic["GFINTN"] = sim_yr["gfintn"] * (cbo["gdp"]/data_yr["xgdpn"]) # Fed net interest
-    dynamic["EGFLN"] = sim_yr["egfln"] * (cbo["gdp"]/data_yr["xgdpn"]) # Fed employee comp
-    dynamic["EGFEN"] = sim_yr["egfen"] * (cbo["gdp"]/data_yr["xgdpn"]) # Nominal Fed govnt expenditures
+    dynamic["GFSRPN"] = sim_yr["gfsrpn"] * (macro["gdp"]/data_yr["xgdpn"]) # Fed govnt surplus
+    dynamic["GTN"] = sim_yr["gtn"] * (macro["gdp"]/data_yr["xgdpn"]) # Fed net transfer
+    dynamic["GFINTN"] = sim_yr["gfintn"] * (macro["gdp"]/data_yr["xgdpn"]) # Fed net interest
+    dynamic["EGFLN"] = sim_yr["egfln"] * (macro["gdp"]/data_yr["xgdpn"]) # Fed employee comp
+    dynamic["EGFEN"] = sim_yr["egfen"] * (macro["gdp"]/data_yr["xgdpn"]) # Nominal Fed govnt expenditures
 
     # Tax rates #
     dynamic["TRP"] = sim_yr_avg["trp"]
@@ -233,8 +226,8 @@ def dynamic_rev(card: DataFrame, run: int, start: Period, end: Period, data: Dat
     dynamic["TRCI_t"] = sim_yr_avg["trci_t"]
 
     # Tax Base #
-    #dynamic["TRP_Base"] = (sim_yr["ypn"] - sim_yr["gtn"]) * (cbo["gdp"]/data_yr["xgdpn"])
-    #dynamic["TRCI_Base"] = sim_yr["ynicpn"] * (cbo["gdp"]/data_yr["xgdpn"])
+    #dynamic["TRP_Base"] = (sim_yr["ypn"] - sim_yr["gtn"]) * (macro["gdp"]/data_yr["xgdpn"])
+    #dynamic["TRCI_Base"] = sim_yr["ynicpn"] * (macro["gdp"]/data_yr["xgdpn"])
 
     dynamic["TRP_Base"] = (sim_yr_avg["ypn"] - sim_yr_avg["gtn"]) 
     dynamic["TRCI_Base"] = sim_yr_avg["ynicpn"] 
@@ -257,16 +250,16 @@ def dynamic_rev(card: DataFrame, run: int, start: Period, end: Period, data: Dat
 
     return(dynamic)
 
-def denton_boot(TPN_ts: array):
+def denton_boot(Annual: array):
     #---------------------------------------------------------------------
     # This function takes in annual tax revenue data and interpolates it 
     # to quarterly frequency. This method smooths the new year step up.
     # Parameters:
-    #   TPN_ts (array): Annual tax revenue data of length T
+    #   Annual (array): Annual tax revenue data of length T
     # Returns:
     #   out (array): Quarterly tax revenue data of length 4T
     #---------------------------------------------------------------------
-    T = len(TPN_ts)
+    T = len(Annual)
     Tq = T * 4
 
     C = calc_c(Tq)
@@ -277,7 +270,7 @@ def denton_boot(TPN_ts: array):
     lhs1 = np.concatenate((C, J), axis=0)
     lhs2 = np.concatenate((J_t, zero4), axis=0)
     lhs = np.linalg.inv(np.concatenate((lhs1, lhs2), axis=1))   
-    rhs = np.append(np.zeros(Tq), TPN_ts)
+    rhs = np.append(np.zeros(Tq), Annual)
 
     out = np.dot(lhs, rhs)
     return(out[0:Tq])
