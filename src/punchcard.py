@@ -18,14 +18,21 @@ def parse_tax_sim(card: DataFrame, run: int, base = False) -> DataFrame:
         ts_id = str(card.loc[run, "ts_id"]) + "/conventional"
 
     #ts = pandas.read_csv(os.path.join("/gpfs/gibbs/project/sarin/shared/model_data/Tax-Simulator", version, vintage, ts_id, "totals/1040.csv"), index_col = 0)
-    ts = pandas.read_csv(os.path.join("/vast/palmer/scratch/sarin/jar335/Tax-Simulator", version, vintage, ts_id, "totals/1040.csv"), index_col = 0)
+    ts = pandas.read_csv(os.path.join("/vast/palmer/scratch/sarin/jar335/Tax-Simulator", version, vintage, ts_id, "totals/receipts.csv"), index_col = 0)
 
     ts.index = pandas.PeriodIndex(ts.index, freq="Y")
-    
-    return(ts[["liab_iit", "liab_iit_net"]])
 
-def parse_corp_sim(card: DataFrame, run: int) -> DataFrame:
-    cs = pandas.read_csv(str(card.loc[run, "corp_data"]), index_col=0)
+    ts['iit_etr'] = ts['revenues_income_tax'] - ts['outlays_tax_credits'] + ts['revenues_income_tax']
+    
+    return(ts)
+
+def parse_corp_mtr(card: DataFrame, run: int) -> DataFrame:
+    version = str(card.loc[run, "ts_version"])
+    vintage = str(card.loc[run, "ts_vintage"])
+
+    cs = pandas.read_csv(os.path.join("/vast/palmer/scratch/sarin/jar335/Tax-Simulator", version, vintage, "static/supplemental/tax_law.csv"), index_col = 0)
+    cs = cs.loc["filing_status" == 1, "corp.rate"]
+    
     cs.index = pandas.PeriodIndex(cs.index, freq="Y")
     return(cs)
 

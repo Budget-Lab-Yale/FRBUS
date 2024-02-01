@@ -8,7 +8,6 @@ from pyfrbus.load_data import load_data
 from pyfrbus.frbus import Frbus
 from sim_setup import build_data, dynamic_rev
 
-#can move into loop if we want a vintage stamp for every model run
 ct = datetime.datetime.now()
 stamp = str(ct.year)+str(ct.month)+str(ct.day)+str(ct.hour)
 
@@ -16,7 +15,6 @@ card = pandas.read_csv(sys.argv[1])
 
 data = build_data(card, 0)
 
-#frbus = Frbus(os.path.join("/gpfs/gibbs/project/sarin/shared/raw_data/FRBUS", str(card.loc[run, "version"]), str(card.loc[run, "vintage"]), "model.xml"))
 frbus = Frbus("/gpfs/gibbs/project/sarin/shared/conda_pkgs/pyfrbus/models/model.xml")
 
 for run in range(1, len(card)):
