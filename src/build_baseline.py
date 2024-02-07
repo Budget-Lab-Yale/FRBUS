@@ -72,7 +72,8 @@ with_adds.loc[start:end, "tpn_t"] = TPN_fs * 1.25
 with_adds.loc[start:end, "tcin_t"] = with_adds.loc[start:end, "tcin"] #TCIN_fs
 with_adds.loc[start:end, "xgdpn_t"] = with_adds.loc[start:end, "xgdpn"]
 with_adds.loc[start:end, "gfsrpn_t"] = gfsrpn_dent
-
+with_adds.loc[start:, "gfdrt"] = with_adds.loc[start, "gfdbtn"] / with_adds.loc[start, "xgdpn"]
+#print(max(with_adds.loc[start:end, "gfdbtn"] / with_adds.loc[start:end, "xgdpn"]))
 
 out = frbus.mcontrol(start, end, with_adds, 
     targ=["tpn", "tcin", "xgdpn", "gfsrpn"], 

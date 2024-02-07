@@ -10,24 +10,18 @@ from pyfrbus.load_data import load_data
 from pyfrbus.frbus import Frbus
 from punchcard import parse_tax_sim, read_macro, parse_corp_mtr, get_housing_subsidy_rates
 
-def levers(start: Union[str, Period], end: Union[str, Period], data: DataFrame, standard = True):
-    if standard:
-        data.loc[start:, 'dfpdbt'] = 0
-        data.loc[start:, 'dfpex'] = 1
-        data.loc[start:, 'dfpsrp'] = 0
+def levers(start: Union[str, Period], end: Union[str, Period], data: DataFrame, dfp: str, dmp: str):
+    fiscal = [col for col in data.columns if 'dfp' in col]
+    fiscal.remove(dfp)
+    monetary = [col for col in data.columns if 'dmp' in col]
+    monetary.remove(dmp)
 
-        data.loc[start:, "dmpintay"] = 1
-        data.loc[start:, "dmptay"] = 0
-        data.loc[start:, "dmpalt"] = 0
-        data.loc[start:, "dmpex"] = 0
-        data.loc[start:, "dmprr"] = 0
-        data.loc[start:, "dmptlr"] = 0
-        data.loc[start:, "dmptlur"] = 0
-        data.loc[start:, "dmptmax"] = 0
-        data.loc[start:, "dmptpi"] = 0
-        data.loc[start:, "dmptr"] = 0
-        data.loc[start:, "dmptrsh"] = 0
-
+    data.loc[start:end, [dfp, dmp]] = 1
+    for i in fiscal:
+        data.loc[start:end, i] = 0
+    for j in monetary:
+        data.loc[start:end, j] = 0
+        
     return(data)
 
 def build_data(card: DataFrame, run: int, raw = False, card_dates = False):
@@ -91,14 +85,9 @@ def build_data(card: DataFrame, run: int, raw = False, card_dates = False):
 
     # Set up fiscal/monetary policy levers
     frbus = Frbus("/gpfs/gibbs/project/sarin/shared/conda_pkgs/pyfrbus/models/model.xml", mce="mcap+wp")
-    longbase.loc[start:end, "dfpsrp"] = 1
-    longbase.loc[start:end, "dfpdbt"] = 0
+    longbase.loc[start:end, "dfpsrp"] = 0
+    longbase.loc[start:end, "dfpdbt"] = 1
     longbase.loc[start:end, "dfpex"] = 0
-
-    longbase.loc[start-100:, 'dfpdbt'] = 0
-    longbase.loc[start-100:end, 'dfpex'] = 1
-    longbase.loc[start-100:end, 'dfpsrp'] = 0
-    longbase.loc[end+1:, 'dfpsrp'] = 1
 
     longbase.loc[start:, "dmpintay"] = 1
     longbase.loc[start:, "dmptay"] = 0
@@ -119,7 +108,7 @@ def build_data(card: DataFrame, run: int, raw = False, card_dates = False):
     with_adds.loc[start:end, "trfpm"] = TRFPM_fs
     with_adds.loc[start:end, "trfcim"] = TRFCIM_fs
 
-    out = frbus.mcontrol(start, end+40, with_adds, targ=["tpn", "tcin"], traj=["tpn_t", "tcin_t"], inst=["trp_aerr", "trci_aerr"])
+    out = frbus.mcontrol(start, end, with_adds, targ=["tpn", "tcin"], traj=["tpn_t", "tcin_t"], inst=["trp_aerr", "trci_aerr"])
 
     # Filter out values not found in original longbase (they all contain '_')
     out = out.filter(regex="^((?!_).)*$")
