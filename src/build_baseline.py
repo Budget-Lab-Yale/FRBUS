@@ -7,32 +7,28 @@ import os
 from pyfrbus.load_data import load_data
 from pyfrbus.frbus import Frbus
 from sim_setup import denton_boot
-from punchcard import parse_tax_sim, read_gdp, parse_corp_etr
+from punchcard import parse_tax_sim, read_macro
 from pyfrbus.sim_lib import sim_plot
 
 card = pandas.read_csv(sys.argv[1])
 run = 0
 
-ct = datetime.datetime.now()
-stamp = str(ct.year)+str(ct.month)+str(ct.day)+str(ct.hour)+str(card.loc[run, "stamp"])
+stamp = datetime.datetime.now().strftime('%Y%m%d%H')
 
 longbase = load_data(os.path.join("/gpfs/gibbs/project/sarin/shared/raw_data/FRBUS", str(card.loc[run, "lb_version"]), str(card.loc[run, "lb_vintage"]), "LONGBASE.TXT"))
 
 ts = parse_tax_sim(card, run, True)
 ts = ts[-31:]
 
-cs = parse_corp_sim(card, run)
-
-start = pandas.Period("2017")
-end = pandas.Period("2047")
+start = pandas.Period("2023")
+end = pandas.Period("2053")
 end_long = end + 4*10
 
-cbo = read_gdp(card.loc[run, "cbo_path"])
-cbo = cbo.loc[start:end]
-cbo['TPN_ts'] = ts["liab_iit_net"] / cbo["gdp"]
-#cbo['TCIN_cs'] = cs["TCIN"] / cbo["gdp"]
-cbo['TCIN_cs'] = cbo["rev_corp"] / cbo["gdp"]
-cbo['gfsrpn_cbo'] = (cbo["rev"] - cbo["outlays"]) / cbo["gdp"]
+macro = read_macro(card.loc[run, "macro_path"])
+macro = macro.loc[start:end]
+macro['TPN_ts'] = ts["iit_etr"] / macro["gdp"]
+macro['TCIN_cs'] = ts["revenues_corp_tax"] / macro["gdp"]
+macro['gfsrpn_macro'] = (macro["rev"] - macro["outlays"]) / macro["gdp"]
 
 start = start.asfreq('Q') - 3
 end = end.asfreq('Q')
@@ -40,14 +36,14 @@ end_long = end_long.asfreq("Q")
 
 temp = longbase.loc[start:end, "xgdpn"]
 temp = temp.groupby(temp.index.year).sum() 
-temp.index = cbo.index
-cbo["TPN_ts"] *= temp
-cbo["TCIN_cs"] *= temp 
-cbo["gfsrpn_cbo"] *= temp
+temp.index = macro.index
+macro["TPN_ts"] *= temp
+macro["TCIN_cs"] *= temp 
+macro["gfsrpn_macro"] *= temp
 
-TPN_fs = denton_boot(cbo["TPN_ts"].to_numpy())
-TCIN_fs = denton_boot(cbo["TCIN_cs"].to_numpy())
-gfsrpn_dent = denton_boot(cbo["gfsrpn_cbo"].to_numpy())
+TPN_fs = denton_boot(macro["TPN_ts"].to_numpy())
+TCIN_fs = denton_boot(macro["TCIN_cs"].to_numpy())
+gfsrpn_dent = denton_boot(macro["gfsrpn_macro"].to_numpy())
 
 frbus = Frbus("/gpfs/gibbs/project/sarin/shared/conda_pkgs/pyfrbus/models/model.xml", mce="mcap+wp")
 longbase.loc[start-100:, 'dfpdbt'] = 0
