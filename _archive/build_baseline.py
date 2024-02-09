@@ -8,12 +8,13 @@ from pyfrbus.load_data import load_data
 from pyfrbus.frbus import Frbus
 from sim_setup import denton_boot
 from punchcard import parse_tax_sim, read_macro
-from pyfrbus.sim_lib import sim_plot
 
-card = pandas.read_csv(sys.argv[1])
+card_path = os.path.join(os.path.dirname(__file__), "..", "punchcards", "tcja_ext_build_card.csv")
+card = pandas.read_csv(card_path)
+
 run = 0
 
-stamp = datetime.datetime.now().strftime('%Y%m%d%H')
+stamp = datetime.datetime.now().strftime('%Y%m%d%H') + "onecols"
 
 longbase = load_data(os.path.join("/gpfs/gibbs/project/sarin/shared/raw_data/FRBUS", str(card.loc[run, "lb_version"]), str(card.loc[run, "lb_vintage"]), "LONGBASE.TXT"))
 
@@ -46,10 +47,9 @@ TCIN_fs = denton_boot(macro["TCIN_cs"].to_numpy())
 gfsrpn_dent = denton_boot(macro["gfsrpn_macro"].to_numpy())
 
 frbus = Frbus("/gpfs/gibbs/project/sarin/shared/conda_pkgs/pyfrbus/models/model.xml", mce="mcap+wp")
-longbase.loc[start-100:, 'dfpdbt'] = 0
-longbase.loc[start-100:end, 'dfpex'] = 1
-longbase.loc[start-100:end, 'dfpsrp'] = 0
-longbase.loc[end+1:, 'dfpsrp'] = 1
+longbase.loc[:, 'dfpdbt'] = 1
+longbase.loc[:, 'dfpex'] = 0
+longbase.loc[:, 'dfpsrp'] = 0
 
 longbase.loc[start:, "dmpintay"] = 1
 longbase.loc[start:, "dmptay"] = 0
@@ -72,12 +72,16 @@ with_adds.loc[start:end, "tpn_t"] = TPN_fs * 1.25
 with_adds.loc[start:end, "tcin_t"] = with_adds.loc[start:end, "tcin"] #TCIN_fs
 with_adds.loc[start:end, "xgdpn_t"] = with_adds.loc[start:end, "xgdpn"]
 with_adds.loc[start:end, "gfsrpn_t"] = gfsrpn_dent
-
+#with_adds.loc[start:, "gfdrt"] = max(with_adds.loc[start:end, "gfdbtn"] / with_adds.loc[start:end, "xgdpn"])
+with_adds.loc[start:, "gfdrt"] = with_adds.loc[start,"gfdbtn"] / with_adds.loc[start,"xgdpn"]
 
 out = frbus.mcontrol(start, end, with_adds, 
     targ=["tpn", "tcin", "xgdpn", "gfsrpn"], 
     traj=["tpn_t", "tcin_t", "xgdpn_t", "gfsrpn_t"], 
     inst=["trp_aerr", "trci_aerr", "xpn_aerr", "ugfsrp_aerr"])
+
+print(with_adds.loc[start:end, ["tpn", "tpn_t"]])
+print(out.loc[start:end, ["tpn", "tpn_t"]])
 
 out = out.filter(regex="^((?!_).)*$")
 

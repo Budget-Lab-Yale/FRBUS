@@ -1,5 +1,4 @@
 import pandas
-import numpy as np
 import scipy
 import os
 
@@ -9,28 +8,20 @@ from typing import Union
 from pyfrbus.load_data import load_data
 from pyfrbus.frbus import Frbus
 from punchcard import parse_tax_sim, read_macro, parse_corp_mtr, get_housing_subsidy_rates
+from computation import denton_boot
 
-def levers(start: Union[str, Period], end: Union[str, Period], data: DataFrame, standard = True):
-    if standard:
-        data.loc[start:, 'dfpdbt'] = 0
-        data.loc[start:, 'dfpex'] = 1
-        data.loc[start:, 'dfpsrp'] = 0
+def levers(data: DataFrame, dfp: str, dmp: str):
+    fiscal = [col for col in data.columns if 'dfp' in col]
+    fiscal.remove(dfp)
+    monetary = [col for col in data.columns if 'dmp' in col]
+    monetary.remove(dmp)
 
-        data.loc[start:, "dmpintay"] = 1
-        data.loc[start:, "dmptay"] = 0
-        data.loc[start:, "dmpalt"] = 0
-        data.loc[start:, "dmpex"] = 0
-        data.loc[start:, "dmprr"] = 0
-        data.loc[start:, "dmptlr"] = 0
-        data.loc[start:, "dmptlur"] = 0
-        data.loc[start:, "dmptmax"] = 0
-        data.loc[start:, "dmptpi"] = 0
-        data.loc[start:, "dmptr"] = 0
-        data.loc[start:, "dmptrsh"] = 0
-
+    data.loc[:, [dfp, dmp]] = 1
+    data.loc[:, fiscal + monetary] = 0
+        
     return(data)
 
-def build_data(card: DataFrame, run: int, raw = False, card_dates = False):
+def build_data(card: DataFrame, run: int, base = False, card_dates = False):
     #---------------------------------------------------------------------
     # This function constructs a baseline dataset using the mcontrol protocol
     # against which alternate scenario runs are compared. 
@@ -42,13 +33,10 @@ def build_data(card: DataFrame, run: int, raw = False, card_dates = False):
     #   longbase (DataFrame): FRB longbase.txt file adjusted to suit this 
     #                         specific policy test.
     #---------------------------------------------------------------------
-    if raw:
-        longbase = load_data(os.path.join("/gpfs/gibbs/project/sarin/shared/raw_data/FRBUS", str(card.loc[run, "lb_version"]), str(card.loc[run, "lb_vintage"]), "LONGBASE.TXT"))
-    else:
-        longbase = load_data(os.path.join("/gpfs/gibbs/project/sarin/shared/model_data/FRBUS/Baselines", str(card.loc[run, "lb_vintage"]), "LONGBASE.TXT"))
-
+    longbase = load_data(os.path.join("/gpfs/gibbs/project/sarin/shared/raw_data/FRBUS", str(card.loc[run, "lb_version"]), str(card.loc[run, "lb_vintage"]), "LONGBASE.TXT"))
+    
     # Get tax variable paths from Tax Simulator
-    ts = parse_tax_sim(card, run, base = True)
+    ts = parse_tax_sim(card, run, base)
 
     if card_dates:
         start = pandas.Period(card.loc[run, "start"][0:4], freq="Y")
@@ -65,13 +53,14 @@ def build_data(card: DataFrame, run: int, raw = False, card_dates = False):
     macro = macro.loc[start:end,:]
     macro['TPN_ts'] = ts["iit_etr"] / macro["gdp"]
     macro['TCIN_cs'] = ts["revenues_corp_tax"] / macro["gdp"]
+    macro['gfsrpn_macro'] = (macro["rev"] - macro["outlays"]) / macro["gdp"]
 
     # Calculate / Parse MTRs
     corp_mtr = parse_corp_mtr(card, run)
     corp_mtr = corp_mtr.loc[start:end,:]
     per_mtr = get_housing_subsidy_rates(card, run)
     per_mtr = per_mtr.loc[start:end,:]
-
+    
     start = start.asfreq('Q') - 3
     end = end.asfreq('Q')
 
@@ -81,46 +70,41 @@ def build_data(card: DataFrame, run: int, raw = False, card_dates = False):
     temp.index = macro.index
     macro["TPN_ts"] *= temp
     macro["TCIN_cs"] *= temp 
+    macro["gfsrpn_macro"] *= temp
 
     # Interpolate annual values to quarterly
     # TRFPM is resigned to reflect FRBUS's interpretation of the value as a subsidy
     TPN_fs = denton_boot(macro["TPN_ts"].to_numpy())
     TCIN_fs = denton_boot(macro["TCIN_cs"].to_numpy())
-    TRFPM_fs = (denton_boot(per_mtr["base"].to_numpy())) * -4
+    TRFPM_fs = (denton_boot(per_mtr["base"].to_numpy())) * -400
+    gfsrpn_dent = denton_boot(macro["gfsrpn_macro"].to_numpy())
     TRFCIM_fs = (denton_boot(corp_mtr["corp.rate"].to_numpy())) * 4
-
+    
     # Set up fiscal/monetary policy levers
     frbus = Frbus("/gpfs/gibbs/project/sarin/shared/conda_pkgs/pyfrbus/models/model.xml", mce="mcap+wp")
-    longbase.loc[start:end, "dfpsrp"] = 1
-    longbase.loc[start:end, "dfpdbt"] = 0
-    longbase.loc[start:end, "dfpex"] = 0
 
-    longbase.loc[start-100:, 'dfpdbt'] = 0
-    longbase.loc[start-100:end, 'dfpex'] = 1
-    longbase.loc[start-100:end, 'dfpsrp'] = 0
-    longbase.loc[end+1:, 'dfpsrp'] = 1
-
-    longbase.loc[start:, "dmpintay"] = 1
-    longbase.loc[start:, "dmptay"] = 0
-    longbase.loc[start:, "dmpalt"] = 0
-    longbase.loc[start:, "dmpex"] = 0
-    longbase.loc[start:, "dmprr"] = 0
-    longbase.loc[start:, "dmptlr"] = 0
-    longbase.loc[start:, "dmptlur"] = 0
-    longbase.loc[start:, "dmptmax"] = 0
-    longbase.loc[start:, "dmptpi"] = 0
-    longbase.loc[start:, "dmptr"] = 0
-    longbase.loc[start:, "dmptrsh"] = 0
+    longbase = levers(longbase, card.loc[run, "dfp"], card.loc[run, "dmp"])
 
     # Set paths and solve
     with_adds = frbus.init_trac(start, end, longbase)
-    with_adds.loc[start:end, "tpn_t"] = TPN_fs 
+    with_adds.loc[start:end, "tpn_t"] = TPN_fs * 1.25
     with_adds.loc[start:end, "tcin_t"] = TCIN_fs
     with_adds.loc[start:end, "trfpm"] = TRFPM_fs
     with_adds.loc[start:end, "trfcim"] = TRFCIM_fs
+    with_adds.loc[start:, "gfdrt"] = 1.1 #with_adds.loc[start,"gfdbtn"] / with_adds.loc[start,"xgdpn"] # Average? Max? Hardcode?
+    with_adds.loc[start:end, "gfsrpn_t"] = gfsrpn_dent
 
-    out = frbus.mcontrol(start, end+40, with_adds, targ=["tpn", "tcin"], traj=["tpn_t", "tcin_t"], inst=["trp_aerr", "trci_aerr"])
+    with_adds.loc[start:end, "xgdpn_t"] = with_adds.loc[start:end, "xgdpn"]
+    with_adds.loc[start:end, "xgdp_t"] = with_adds.loc[start:end, "xgdp"]
+    with_adds.loc[start:end, "picxfe_t"] = with_adds.loc[start:end, "picxfe"]
+    with_adds.loc[start:end, "lur_t"] = with_adds.loc[start:end, "lur"]
+    with_adds.loc[start:end, "rff_t"] = with_adds.loc[start:end, "rff"]
 
+    out = frbus.mcontrol(start, end, with_adds, 
+        targ=["tpn",      "tcin",      "xgdpn",    "gfsrpn",      "xgdp",     "picxfe",      "lur",      "rff"], 
+        traj=["tpn_t",    "tcin_t",    "xgdpn_t",  "gfsrpn_t",    "xgdp_t",   "picxfe_t",    "lur_t",    "rff_t"], 
+        inst=["trp_aerr", "trci_aerr", "xpn_aerr", "ugfsrp_aerr", "eco_aerr", "picxfe_aerr", "lhp_aerr", "rff_aerr"])
+    
     # Filter out values not found in original longbase (they all contain '_')
     out = out.filter(regex="^((?!_).)*$")
 
@@ -129,10 +113,8 @@ def build_data(card: DataFrame, run: int, raw = False, card_dates = False):
     return(longbase)
 
 def calc_tpn_path(card: DataFrame, run: int, data: DataFrame, card_dates = False):
-    if(card.loc[run, "ID"]=="baseline"):
-        ts = parse_tax_sim(card, run, True)
-    else:
-        ts = parse_tax_sim(card, run, False)
+    
+    ts = parse_tax_sim(card, run, card.loc[run, "ID"]=="baseline")
     
     if card_dates:
         start = pandas.Period(card.loc[run, "start"][0:4], freq="Y")
@@ -187,8 +169,9 @@ def calc_tcin_path(card: DataFrame, run: int, data: DataFrame, card_dates = Fals
     
     return(TCIN_fs)
 
-def dynamic_rev(card: DataFrame, run: int, start: Period, end: Period, data: DataFrame, frbus: Frbus, delta=False):
+def dynamic_rev(card: DataFrame, run: int, start: Period, end: Period, data: DataFrame, frbus: Frbus, outpath = None, delta=False):
     macro = read_macro(card.loc[run, "macro_path"])
+    macro = macro.loc[start.asfreq('Y'):end.asfreq('Y'), :]
 
     per_mtr = get_housing_subsidy_rates(card, run)
     per_mtr = per_mtr.loc[start.asfreq('Y'):end.asfreq('Y'),:]
@@ -203,11 +186,30 @@ def dynamic_rev(card: DataFrame, run: int, start: Period, end: Period, data: Dat
         data.loc[start:end, "trp_t"] = (calc_tpn_path(card, run, data, True)) / (data.loc[start:end, "ypn"] - data.loc[start:end, "gtn"])
         data.loc[start:end, "trci_t"] = (calc_tcin_path(card, run, data, True)) / data.loc[start:end, "ynicpn"]
     
-    data.loc[start:end, "trfpm"] = (denton_boot(per_mtr["scen"].to_numpy())) * -4
+
+    data.loc[start:end, "trfpm"] = (denton_boot(per_mtr["scen"].to_numpy())) * -400
     data.loc[start:end, "trfcim"] = (denton_boot(corp_mtr["corp.rate"].to_numpy())) * 4
+    data.loc[start:, "gfdrt"] = 1.1 #data.loc[start,"gfdbtn"] / data.loc[start,"xgdpn"] # Average? Max? Hardcode?
+    
+    if card.loc[run, "ID"]=="baseline":
+        macro['gfsrpn_macro'] = (macro["rev"] - macro["outlays"]) / macro["gdp"]
+        gfsrpn_dent = denton_boot(macro['gfsrpn_macro'].to_numpy())
 
-    sim = frbus.mcontrol(start, end, data, targ=["trp", "trci"], traj=["trp_t", "trci_t"], inst=["trp_aerr", "trci_aerr"])
+        data.loc[start:end, "xgdpn_t"]  = data.loc[start:end, "xgdpn"]
+        data.loc[start:end, "xgdp_t"]   = data.loc[start:end, "xgdp"]
+        data.loc[start:end, "picxfe_t"] = data.loc[start:end, "picxfe"]
+        data.loc[start:end, "lur_t"]    = data.loc[start:end, "lur"]
+        data.loc[start:end, "rff_t"]    = data.loc[start:end, "rff"]
+        data.loc[start:end, "gfsrpn_t"] = gfsrpn_dent
+        
+        sim = frbus.mcontrol(start, end, data, 
+            targ=["trp",      "trci",      "xgdpn",    "gfsrpn",      "xgdp",     "picxfe",      "lur",      "rff"], 
+            traj=["trp_t",    "trci_t",    "xgdpn_t",  "gfsrpn_t",    "xgdp_t",   "picxfe_t",    "lur_t",    "rff_t"], 
+            inst=["trp_aerr", "trci_aerr", "xpn_aerr", "ugfsrp_aerr", "eco_aerr", "picxfe_aerr", "lhp_aerr", "rff_aerr"])
 
+    else:
+        sim = frbus.mcontrol(start, end, data, targ=["trp", "trci"], traj=["trp_t", "trci_t"], inst=["trp_aerr", "trci_aerr"])
+    
     data_yr = data.groupby(data.index.year).sum()
     sim_yr  = sim.groupby(sim.index.year).sum()
     sim_yr_avg  = sim.groupby(sim.index.year).mean() #for variables not converted between macro/FRBUS $
@@ -227,6 +229,7 @@ def dynamic_rev(card: DataFrame, run: int, start: Period, end: Period, data: Dat
 
     # Real GDP and its components #
     dynamic["XGDP"] = sim_yr["xgdp"] * (macro["gdp"]/data_yr["xgdpn"]) # Real GDP
+    dynamic["XGDPN"] = sim_yr["xgdpn"] * (macro["gdp"]/data_yr["xgdpn"]) # Nominal GDP
     dynamic["ECNIA"] = sim_yr["ecnia"] * (macro["gdp"]/data_yr["xgdpn"]) # PCE
     dynamic["EBFI"] = sim_yr["ebfi"] * (macro["gdp"]/data_yr["xgdpn"]) # Bus Fixed Investment
     dynamic["EH"] = sim_yr["eh"] * (macro["gdp"]/data_yr["xgdpn"]) # Residential investment
@@ -241,6 +244,11 @@ def dynamic_rev(card: DataFrame, run: int, start: Period, end: Period, data: Dat
     dynamic["GFINTN"] = sim_yr["gfintn"] * (macro["gdp"]/data_yr["xgdpn"]) # Fed net interest
     dynamic["EGFLN"] = sim_yr["egfln"] * (macro["gdp"]/data_yr["xgdpn"]) # Fed employee comp
     dynamic["EGFEN"] = sim_yr["egfen"] * (macro["gdp"]/data_yr["xgdpn"]) # Nominal Fed govnt expenditures
+
+    # Debt
+    dynamic["UGFDBTP"] = sim_yr["ugfdbtp"] / 4 # Debt Ratio
+    dynamic["GFDBTN"] = sim_yr["gfdbtn"] * (macro["gdp"]/data_yr["xgdpn"])  # Debt Stock
+    dynamic["GFDBTNP"] = sim_yr["gfdbtnp"] * (macro["gdp"]/data_yr["xgdpn"])  # Debt Stock held by public
 
     # Tax rates #
     dynamic["TRP"] = sim_yr_avg["trp"]
@@ -271,62 +279,11 @@ def dynamic_rev(card: DataFrame, run: int, start: Period, end: Period, data: Dat
 
     dynamic.index = pandas.PeriodIndex(dynamic.index, freq = "Y")
 
+    if outpath is not None:
+        out = sim.filter(regex="^((?!_).)*$")
+        longbase = load_data(os.path.join("/gpfs/gibbs/project/sarin/shared/raw_data/FRBUS", str(card.loc[run, "lb_version"]), str(card.loc[run, "lb_vintage"]), "LONGBASE.TXT"))
+        longbase.loc[start:end,:] = out.loc[start:end,:]
+        longbase.to_csv(os.path.join(outpath,card.loc[run,"ID"]+"_LONGBASE.csv"))
+
     return(dynamic)
-
-def denton_boot(Annual: array):
-    #---------------------------------------------------------------------
-    # This function takes in annual tax revenue data and interpolates it 
-    # to quarterly frequency. This method smooths the new year step up.
-    # Parameters:
-    #   Annual (array): Annual tax revenue data of length T
-    # Returns:
-    #   out (array): Quarterly tax revenue data of length 4T
-    #---------------------------------------------------------------------
-    T = len(Annual)
-    Tq = T * 4
-
-    C = calc_c(Tq)
-    J = calc_j(T)
-    J_t = np.transpose(J * -1)
-    zero4 = np.zeros((T,T))
-    
-    lhs1 = np.concatenate((C, J), axis=0)
-    lhs2 = np.concatenate((J_t, zero4), axis=0)
-    lhs = np.linalg.inv(np.concatenate((lhs1, lhs2), axis=1))   
-    rhs = np.append(np.zeros(Tq), Annual)
-
-    out = np.dot(lhs, rhs)
-    return(out[0:Tq])
-
-def calc_j(T: int):
-    pattern = np.array([1,1,1,1])
-    return(np.kron(np.eye(T), pattern))
-
-def calc_c(Tq: int):
-    #---------------------------------------------------------------------
-    # This function creates a square band matrix for Denton interpolation
-    # Parameters:
-    #   Tq (int) : The number of quarters to be interpolated
-    # Returns:
-    #   C (numpy): A Tq X Tq band matrix
-    #---------------------------------------------------------------------
-    base = inner_band([2,-8,12,-8,2], Tq-4)
-    v0 = np.zeros(Tq)
-    v1 = np.zeros(Tq)
-    np.put(v0, [0,1,2], [2,-4,2])
-    np.put(v1, [0,1,2,3], [-4,10,-8,2])
-    out = np.insert(base, 0, v1, axis=0)
-    out = np.insert(out, 0, v0, axis=0)
-    out = np.insert(out, len(out), np.flip(v1), axis=0)
-    out = np.insert(out, len(out), np.flip(v0), axis=0)
-    return(out)
-
-def inner_band(a, W):
-    # Thank you: http://scipy-lectures.org/advanced/advanced_numpy/#indexing-scheme-strides
-    a = np.asarray(a)
-    p = np.zeros(W-1,dtype=a.dtype)
-    b = np.concatenate((p,a,p))
-    s = b.strides[0]
-    strided = np.lib.stride_tricks.as_strided
-    return strided(b[W-1:], shape=(W,len(a)+W-1), strides=(-s,s))
 
