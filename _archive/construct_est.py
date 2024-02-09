@@ -17,7 +17,8 @@ from punchcard import get_housing_subsidy_rates
 
 stamp = datetime.datetime.now().strftime('%Y%m%d%H')
 
-card = read_csv("tcja_ext_card.csv")
+card_path = os.path.join(os.path.dirname(__file__), "..", "punchcards", "tcja_ext_card.csv")
+card = read_csv(card_path)
 run = 1
 ### STEP 1A: Disaggregate Tax Sim revenue series ###
 data = build_data(card, run, raw = False, card_dates = True)
