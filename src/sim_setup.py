@@ -21,7 +21,7 @@ def levers(data: DataFrame, dfp: str, dmp: str):
         
     return(data)
 
-def build_data(card: DataFrame, run: int, base = False, card_dates = False):
+def build_data(card: DataFrame, run: int, base = False, card_dates = False, dynamic = False):
     #---------------------------------------------------------------------
     # This function constructs a baseline dataset using the mcontrol protocol
     # against which alternate scenario runs are compared. 
@@ -76,7 +76,7 @@ def build_data(card: DataFrame, run: int, base = False, card_dates = False):
     # TRFPM is resigned to reflect FRBUS's interpretation of the value as a subsidy
     TPN_fs = denton_boot(macro["TPN_ts"].to_numpy())
     TCIN_fs = denton_boot(macro["TCIN_cs"].to_numpy())
-    TRFPM_fs = (denton_boot(per_mtr["base"].to_numpy())) * -400
+    TRFPM_fs = (denton_boot(per_mtr["base"].to_numpy())) * -400 # -1 * 4 * 100
     gfsrpn_dent = denton_boot(macro["gfsrpn_macro"].to_numpy())
     TRFCIM_fs = (denton_boot(corp_mtr["corp.rate"].to_numpy())) * 4
     
@@ -100,17 +100,40 @@ def build_data(card: DataFrame, run: int, base = False, card_dates = False):
     with_adds.loc[start:end, "lur_t"] = with_adds.loc[start:end, "lur"]
     with_adds.loc[start:end, "rff_t"] = with_adds.loc[start:end, "rff"]
 
-    out = frbus.mcontrol(start, end, with_adds, 
+    sim = frbus.mcontrol(start, end, with_adds, 
         targ=["tpn",      "tcin",      "xgdpn",    "gfsrpn",      "xgdp",     "picxfe",      "lur",      "rff"], 
         traj=["tpn_t",    "tcin_t",    "xgdpn_t",  "gfsrpn_t",    "xgdp_t",   "picxfe_t",    "lur_t",    "rff_t"], 
-        inst=["trp_aerr", "trci_aerr", "xpn_aerr", "ugfsrp_aerr", "eco_aerr", "picxfe_aerr", "lhp_aerr", "rff_aerr"])
+        inst=["trp_aerr", "trci_aerr", "xpn_aerr", "ugfsrp_aerr", "xgdp_aerr", "picxfe_aerr", "lur_aerr", "rff_aerr"])
     
     # Filter out values not found in original longbase (they all contain '_')
-    out = out.filter(regex="^((?!_).)*$")
+    out = sim.filter(regex="^((?!_).)*$")
 
     # Replace section of original longbase within our timeframe with new values
     longbase.loc[start:end,:] = out.loc[start:end,:]
-    return(longbase)
+
+    if dynamic:
+        data_yr = with_adds.loc[start:end,:]
+        data_yr = data_yr.groupby(data_yr.index.year).sum()
+        sim = sim.loc[start:end,:]
+        sim_yr  = sim.groupby(sim.index.year).sum() 
+
+        macro.index = data_yr.index
+
+        dynamic = pandas.DataFrame()
+        dynamic["TPN"] =  (sim_yr["tpn"] / 1.25) * (macro["gdp"]/data_yr["xgdpn"])
+        dynamic["TCIN"] = sim_yr["tcin"] * (macro["gdp"]/data_yr["xgdpn"])
+        dynamic["total_dynamic"] = dynamic["TPN"] + dynamic["TCIN"]
+
+        dynamic.index = ts.index
+
+        dynamic["iit_rev"] = ts["iit_etr"]
+        dynamic["corp_rev"] = ts["revenues_corp_tax"]
+        dynamic["total_conventional"] = dynamic["iit_rev"] + dynamic["corp_rev"]
+
+        return(longbase, dynamic)
+    
+    else:
+        return(longbase)
 
 def calc_tpn_path(card: DataFrame, run: int, data: DataFrame, card_dates = False):
     
@@ -173,6 +196,8 @@ def dynamic_rev(card: DataFrame, run: int, start: Period, end: Period, data: Dat
     macro = read_macro(card.loc[run, "macro_path"])
     macro = macro.loc[start.asfreq('Y'):end.asfreq('Y'), :]
 
+    ts = parse_tax_sim(card, run, base=card.loc[run, "ID"]=="baseline")
+
     per_mtr = get_housing_subsidy_rates(card, run)
     per_mtr = per_mtr.loc[start.asfreq('Y'):end.asfreq('Y'),:]
     corp_mtr = parse_corp_mtr(card, run)
@@ -191,30 +216,34 @@ def dynamic_rev(card: DataFrame, run: int, start: Period, end: Period, data: Dat
     data.loc[start:end, "trfcim"] = (denton_boot(corp_mtr["corp.rate"].to_numpy())) * 4
     data.loc[start:, "gfdrt"] = 1.1 #data.loc[start,"gfdbtn"] / data.loc[start,"xgdpn"] # Average? Max? Hardcode?
     
-    if card.loc[run, "ID"]=="baseline":
-        macro['gfsrpn_macro'] = (macro["rev"] - macro["outlays"]) / macro["gdp"]
-        gfsrpn_dent = denton_boot(macro['gfsrpn_macro'].to_numpy())
+    # if card.loc[run, "ID"]=="baseline":
+    #     macro['gfsrpn_macro'] = (macro["rev"] - macro["outlays"]) / macro["gdp"]
+    #     macro['gfsrpn_macro'] *= data.loc[start:end, "xgdpn"].groupby(data.index.year).sum()
+    #     gfsrpn_dent = denton_boot(macro['gfsrpn_macro'].to_numpy())
 
-        data.loc[start:end, "xgdpn_t"]  = data.loc[start:end, "xgdpn"]
-        data.loc[start:end, "xgdp_t"]   = data.loc[start:end, "xgdp"]
-        data.loc[start:end, "picxfe_t"] = data.loc[start:end, "picxfe"]
-        data.loc[start:end, "lur_t"]    = data.loc[start:end, "lur"]
-        data.loc[start:end, "rff_t"]    = data.loc[start:end, "rff"]
-        data.loc[start:end, "gfsrpn_t"] = gfsrpn_dent
+    #     data.loc[start:end, "xgdpn_t"]  = data.loc[start:end, "xgdpn"]
+    #     data.loc[start:end, "xgdp_t"]   = data.loc[start:end, "xgdp"]
+    #     data.loc[start:end, "picxfe_t"] = data.loc[start:end, "picxfe"]
+    #     data.loc[start:end, "lur_t"]    = data.loc[start:end, "lur"]
+    #     data.loc[start:end, "rff_t"]    = data.loc[start:end, "rff"]
+    #     data.loc[start:end, "gfsrpn_t"] = gfsrpn_dent
         
-        sim = frbus.mcontrol(start, end, data, 
-            targ=["trp",      "trci",      "xgdpn",    "gfsrpn",      "xgdp",     "picxfe",      "lur",      "rff"], 
-            traj=["trp_t",    "trci_t",    "xgdpn_t",  "gfsrpn_t",    "xgdp_t",   "picxfe_t",    "lur_t",    "rff_t"], 
-            inst=["trp_aerr", "trci_aerr", "xpn_aerr", "ugfsrp_aerr", "eco_aerr", "picxfe_aerr", "lhp_aerr", "rff_aerr"])
+    #     sim = frbus.mcontrol(start, end, data, 
+    #         targ=["trp",      "trci",      "xgdpn",    "gfsrpn",      "xgdp",     "picxfe",      "lur",      "rff"], 
+    #         traj=["trp_t",    "trci_t",    "xgdpn_t",  "gfsrpn_t",    "xgdp_t",   "picxfe_t",    "lur_t",    "rff_t"], 
+    #         inst=["trp_aerr", "trci_aerr", "xpn_aerr", "ugfsrp_aerr", "xgdp_aerr", "picxfe_aerr", "lur_aerr", "rff_aerr"])
 
-    else:
-        sim = frbus.mcontrol(start, end, data, targ=["trp", "trci"], traj=["trp_t", "trci_t"], inst=["trp_aerr", "trci_aerr"])
+    # else:
+    sim = frbus.mcontrol(start, end, data, targ=["trp", "trci"], traj=["trp_t", "trci_t"], inst=["trp_aerr", "trci_aerr"])
     
+    sim.loc[start:end, "tpn"] /= 1.25
+
     data_yr = data.groupby(data.index.year).sum()
     sim_yr  = sim.groupby(sim.index.year).sum()
     sim_yr_avg  = sim.groupby(sim.index.year).mean() #for variables not converted between macro/FRBUS $
 
     macro = macro.loc[start.asfreq('Y'):end.asfreq('Y'),]
+    ts = ts.loc[start.asfreq('Y'):end.asfreq('Y'),]
     data_yr = data_yr.loc[start.year:end.year,]
     sim_yr = sim_yr.loc[start.year:end.year,]
     sim_yr_avg = sim_yr_avg.loc[start.year:end.year,]
@@ -224,63 +253,17 @@ def dynamic_rev(card: DataFrame, run: int, start: Period, end: Period, data: Dat
     dynamic = pandas.DataFrame()
     dynamic["TPN"] =  sim_yr["tpn"] * (macro["gdp"]/data_yr["xgdpn"])
     dynamic["TCIN"] = sim_yr["tcin"] * (macro["gdp"]/data_yr["xgdpn"])
-
-    ### Adding other variables of interest for output ####
-
-    # Real GDP and its components #
-    dynamic["XGDP"] = sim_yr["xgdp"] * (macro["gdp"]/data_yr["xgdpn"]) # Real GDP
-    dynamic["XGDPN"] = sim_yr["xgdpn"] * (macro["gdp"]/data_yr["xgdpn"]) # Nominal GDP
-    dynamic["ECNIA"] = sim_yr["ecnia"] * (macro["gdp"]/data_yr["xgdpn"]) # PCE
-    dynamic["EBFI"] = sim_yr["ebfi"] * (macro["gdp"]/data_yr["xgdpn"]) # Bus Fixed Investment
-    dynamic["EH"] = sim_yr["eh"] * (macro["gdp"]/data_yr["xgdpn"]) # Residential investment
-    dynamic["EGFE"] = sim_yr["egfe"] * (macro["gdp"]/data_yr["xgdpn"]) # Fed govnt expenditures
-    dynamic["EGSE"] = sim_yr["egse"] * (macro["gdp"]/data_yr["xgdpn"]) # S&l govnt expenditures
-    dynamic["EM"] = sim_yr["em"] * (macro["gdp"]/data_yr["xgdpn"]) # Imports
-    dynamic["EX"] = sim_yr["ex"] * (macro["gdp"]/data_yr["xgdpn"]) # exports
-
-    # Government Surplus and components #
-    dynamic["GFSRPN"] = sim_yr["gfsrpn"] * (macro["gdp"]/data_yr["xgdpn"]) # Fed govnt surplus
-    dynamic["GTN"] = sim_yr["gtn"] * (macro["gdp"]/data_yr["xgdpn"]) # Fed net transfer
-    dynamic["GFINTN"] = sim_yr["gfintn"] * (macro["gdp"]/data_yr["xgdpn"]) # Fed net interest
-    dynamic["EGFLN"] = sim_yr["egfln"] * (macro["gdp"]/data_yr["xgdpn"]) # Fed employee comp
-    dynamic["EGFEN"] = sim_yr["egfen"] * (macro["gdp"]/data_yr["xgdpn"]) # Nominal Fed govnt expenditures
-
-    # Debt
-    dynamic["UGFDBTP"] = sim_yr["ugfdbtp"] / 4 # Debt Ratio
-    dynamic["GFDBTN"] = sim_yr["gfdbtn"] * (macro["gdp"]/data_yr["xgdpn"])  # Debt Stock
-    dynamic["GFDBTNP"] = sim_yr["gfdbtnp"] * (macro["gdp"]/data_yr["xgdpn"])  # Debt Stock held by public
-
-    # Tax rates #
-    dynamic["TRP"] = sim_yr_avg["trp"]
-    dynamic["TRCI"] = sim_yr_avg["trci"]
-
-    dynamic["TRP_t"] = sim_yr_avg["trp_t"]
-    dynamic["TRCI_t"] = sim_yr_avg["trci_t"]
-
-    # Tax Base #
-    dynamic["TRP_Base"] = (sim_yr["ypn"] - sim_yr["gtn"]) * (macro["gdp"]/data_yr["xgdpn"])
-    dynamic["TRCI_Base"] = sim_yr["ynicpn"] * (macro["gdp"]/data_yr["xgdpn"])
-
-    dynamic["TRP_Base"] = (sim_yr_avg["ypn"] - sim_yr_avg["gtn"]) 
-    dynamic["TRCI_Base"] = sim_yr_avg["ynicpn"] 
-
-    # Labor Force Variables #
-    dynamic["LUR"] = sim_yr_avg["lur"] # unemployment rate 
-    dynamic["LFPR"] = sim_yr_avg["lfpr"] # labor force participation rate
-    dynamic["LEH"] = sim_yr_avg["leh"] # civilian employment
-
-    # Inflation #
-    dynamic["PICNIA"] = sim_yr_avg["picnia"] # PCE inflation rate
-
-    # Interest Rates #
-    dynamic["RFF"] = sim_yr_avg["rff"] # Fed Funds Rate
-    dynamic["RTB"] = sim_yr_avg["rtb"] # 3 month treasury bill
-    dynamic["RG10"] = sim_yr_avg["rg10"] # 10-yr rate
+    dynamic["total_dynamic"] = dynamic["TPN"] + dynamic["TCIN"]
 
     dynamic.index = pandas.PeriodIndex(dynamic.index, freq = "Y")
 
+    dynamic["iit_rev"] = ts["iit_etr"]
+    dynamic["corp_rev"] = ts["revenues_corp_tax"]
+    dynamic["total_conventional"] = dynamic["iit_rev"] + dynamic["corp_rev"]
+
     if outpath is not None:
         out = sim.filter(regex="^((?!_).)*$")
+        
         longbase = load_data(os.path.join("/gpfs/gibbs/project/sarin/shared/raw_data/FRBUS", str(card.loc[run, "lb_version"]), str(card.loc[run, "lb_vintage"]), "LONGBASE.TXT"))
         longbase.loc[start:end,:] = out.loc[start:end,:]
         longbase.to_csv(os.path.join(outpath,card.loc[run,"ID"]+"_LONGBASE.csv"))
