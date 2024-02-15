@@ -1,4 +1,5 @@
 ### Load Packages & Set time stamp ###
+
 from pandas import DataFrame, Period, PeriodIndex, read_csv
 import datetime
 import pyfrbus
@@ -8,7 +9,7 @@ import numpy
 import pandas
 from numpy import array, shape, nan
 
-sys.path.insert(0, "/gpfs/gibbs/project/sarin/jmk263/Repositories/FRBUS/src")
+sys.path.insert(0, "/gpfs/gibbs/project/sarin/hre2/repositories/FRBUS/src")
 
 from pyfrbus.frbus import Frbus
 from sim_setup import build_data, dynamic_rev
@@ -32,7 +33,7 @@ for run in range(0, len(card)):
     start = pandas.Period(card.loc[run, "start"], freq="Q")
     end = pandas.Period(card.loc[run, "end"], freq="Q")
 
-    path = os.path.join("/gpfs/gibbs/project/sarin/shared/model_data/FRBUS/tcja_ext",stamp, card.loc[run, "ID"])
+    path = os.path.join("/gpfs/gibbs/project/sarin/hre2/model_data/FRBUS/tcja_ext",stamp, card.loc[run, "ID"])
     
     if not os.path.exists(path):
         os.makedirs(path)

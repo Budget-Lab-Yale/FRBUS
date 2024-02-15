@@ -103,7 +103,7 @@ def build_data(card: DataFrame, run: int, base = False, card_dates = False, dyna
     sim = frbus.mcontrol(start, end, with_adds, 
         targ=["tpn",      "tcin",      "xgdpn",    "gfsrpn",      "xgdp",     "picxfe",      "lur",      "rff"], 
         traj=["tpn_t",    "tcin_t",    "xgdpn_t",  "gfsrpn_t",    "xgdp_t",   "picxfe_t",    "lur_t",    "rff_t"], 
-        inst=["trp_aerr", "trci_aerr", "xpn_aerr", "ugfsrp_aerr", "xgdp_aerr", "picxfe_aerr", "lur_aerr", "rff_aerr"])
+        inst=["trp_aerr", "trci_aerr", "xgdpn_aerr", "gfsrpn_aerr", "xgdp_aerr", "picxfe_aerr", "lur_aerr", "rff_aerr"])
     
     # Filter out values not found in original longbase (they all contain '_')
     out = sim.filter(regex="^((?!_).)*$")
