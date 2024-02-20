@@ -1,5 +1,5 @@
-ID,start,end,ts_version,ts_vintage,lb_version,lb_vintage,macro_path,dfp,dmp
-baseline,2023Q1,2053Q4,v1,2024020112,v1,20240104,/gpfs/gibbs/project/sarin/shared/model_data/Macro-Projections/v2/2023121812/baseline,dfpdbt,dmpintay
-full_extension,2023Q1,2053Q4,v1,2024020112,v1,20240104,/gpfs/gibbs/project/sarin/shared/model_data/Macro-Projections/v2/2023121812/baseline,dfpdbt,dmpintay
-partial_extension,2023Q1,2053Q4,v1,2024020112,v1,20240104,/gpfs/gibbs/project/sarin/shared/model_data/Macro-Projections/v2/2023121812/baseline,dfpdbt,dmpintay
-sarin_clausing,2023Q1,2053Q4,v1,2024020112,v1,20240104,/gpfs/gibbs/project/sarin/shared/model_data/Macro-Projections/v2/2023121812/baseline,dfpdbt,dmpintay
+ID,start,end,ts_version,ts_vintage,lb_version,lb_vintage,macro_path,dfp,dmp,nipa_vintage
+baseline,2023Q1,2054Q4,v1,2024021912,v1,20240104,/gpfs/gibbs/project/sarin/shared/model_data/Macro-Projections/v3/2024021509/baseline,dfpdbt,dmpintay,20240125
+full_extension,2023Q1,2054Q4,v1,2024021912,v1,20240104,/gpfs/gibbs/project/sarin/shared/model_data/Macro-Projections/v3/2024021509/baseline,dfpdbt,dmpintay,20240125
+partial_extension,2023Q1,2054Q4,v1,2024021912,v1,20240104,/gpfs/gibbs/project/sarin/shared/model_data/Macro-Projections/v3/2024021509/baseline,dfpdbt,dmpintay,20240125
+sarin_clausing,2023Q1,2054Q4,v1,2024021912,v1,20240104,/gpfs/gibbs/project/sarin/shared/model_data/Macro-Projections/v3/2024021509/baseline,dfpdbt,dmpintay,20240125
