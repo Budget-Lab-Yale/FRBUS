@@ -14,6 +14,7 @@ sys.path.insert(0, "/gpfs/gibbs/project/sarin/hre2/repositories/FRBUS/src")
 from pyfrbus.frbus import Frbus
 from sim_setup import build_data, dynamic_rev
 from processing import calc_delta
+from punchcard import run_out, nipa_scalar
 
 stamp = datetime.datetime.now().strftime('%Y%m%d%H')
 
@@ -24,26 +25,23 @@ frbus = Frbus("/gpfs/gibbs/project/sarin/shared/conda_pkgs/pyfrbus/models/model.
 start = pandas.Period(card.loc[0, "start"], freq="Q")
 end = pandas.Period(card.loc[0, "end"], freq="Q")
 
-baseline, dynamic_baseline = build_data(card, 0, base=True, card_dates=True, dynamic=True)
+baseline = build_data(card, 0, card_dates=True)
 with_adds = frbus.init_trac(start, end, baseline)
-#dynamic_baseline = dynamic_rev(card, 0, start, end, with_adds, frbus)
 
 for run in range(0, len(card)):
     #### Construct and run dynamic scenario ####
     start = pandas.Period(card.loc[run, "start"], freq="Q")
-    end = pandas.Period(card.loc[run, "end"], freq="Q")
+    end   = pandas.Period(card.loc[run, "end"], freq="Q")
 
-    path = os.path.join("/gpfs/gibbs/project/sarin/hre2/model_data/FRBUS/tcja_ext",stamp, card.loc[run, "ID"])
+path = os.path.join("/gpfs/gibbs/project/sarin/shared/model_data/FRBUS/tcja_ext", stamp, card.loc[run, "ID"])
     
     if not os.path.exists(path):
         os.makedirs(path)
 
+    dynamic = dynamic_rev(card, run, start, end, with_adds, frbus, outpath = path)
+    
     if run==0:
-        dynamic = dynamic_baseline
-        baseline.to_csv(os.path.join(path, "baseline_LONGBASE.csv"))
-        #use a run out here and switch dynamic rev to be a run out
-    else:
-        dynamic = dynamic_rev(card, run, start, end, with_adds, frbus, outpath = path)
+        dynamic_baseline = dynamic
 
     #### Calculate Dynamic Revenue Delta and other Output ####
 
