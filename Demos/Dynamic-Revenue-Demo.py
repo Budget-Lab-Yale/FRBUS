@@ -33,7 +33,7 @@ for run in range(0, len(card)):
     start = pandas.Period(card.loc[run, "start"], freq="Q")
     end   = pandas.Period(card.loc[run, "end"], freq="Q")
 
-path = os.path.join("/gpfs/gibbs/project/sarin/shared/model_data/FRBUS/tcja_ext", stamp, card.loc[run, "ID"])
+    path = os.path.join("/gpfs/gibbs/project/sarin/shared/model_data/FRBUS/tcja_ext", stamp, card.loc[run, "ID"])
     
     if not os.path.exists(path):
         os.makedirs(path)
