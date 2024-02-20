@@ -1,0 +1,786 @@
+---
+title: "comparison_charts"
+output:
+  pdf_document: default
+  html_document: default
+date: "2024-01-05"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+library(readr)
+library(ggplot2)
+#install.packages("gridExtra")
+library(gridExtra)
+
+```
+
+
+```{r Import FRBUS Datasets, message=FALSE}
+
+dynamic <- read_csv("dynamic_econ.csv", show_col_types = FALSE)
+delta <- read_csv("revenue_deltas.csv", show_col_types = FALSE)
+delta_int <- read_csv("revenue_deltas_int.csv", show_col_types = FALSE)
+dynamic_int <- read_csv("dynamic_econ_int.csv", show_col_types = FALSE)
+baseline <- read_csv("baseline_econ.csv", show_col_types = FALSE)
+jct_dynamic <- read_csv("/gpfs/gibbs/project/sarin/ser68/FRBUS/tcja-2017/Deltas/jct_dynamic.csv", show_col_types = FALSE)
+
+colnames(dynamic)[c(1)] <- c("year")
+colnames(dynamic_int)[c(1)] <- c("year")
+colnames(baseline)[c(1)] <- c("year")
+colnames(delta)[c(1)] <- c("year")
+colnames(delta_int)[c(1)] <- c("year")
+colnames(jct_dynamic)[c(1)] <- c("year")
+
+```
+
+```{r Import CBO dynamic score econ variables, message=FALSE}
+
+cbo <- read_csv("cbo_dynamic_econ.csv", show_col_types = FALSE)
+colnames(cbo)[c(1)] <- c("year")
+
+
+```
+
+# Dyanmic Revenue Estimate
+
+```{r dynamic rev plot}
+
+dynamic_rev <- ggplot() +
+  geom_line(data = delta, aes(x = year, y = rev_delta, color = "FRBUS Dynamic")) +
+  geom_line(data = delta_int, aes(x = year, y = rev_delta, color = "FRBUS Dynamic Int") ) +
+  geom_line(data = jct_dynamic, aes(x = year, y = Dynamic_score_jct, color = "JCT Dyanmic"), linetype = "dashed") +
+  geom_line(data = delta_int, aes(x = year, y = conven_revenue, color = "JCT Conventional Int"), linetype = "dashed") +
+  labs(title = "TCJA Revenue Scores", x = "Year", y = "Bil. ($) Relative to Baseline") +
+  scale_color_manual(values = c("FRBUS Dynamic" = "blue", "FRBUS Dynamic Int" = "red", "JCT Dyanmic" = "black", "JCT Conventional Int" = "gold")) +
+  theme(plot.title = element_text(hjust = 0.5)) +
+  scale_x_continuous(breaks = 2017:2027, labels = as.character(2017:2027)) +
+    theme(legend.position = "bottom", legend.title=element_blank(),
+   panel.background = element_rect(fill = "white",
+                                colour = "black",
+                                size = 0.5, linetype = "solid"))
+
+
+ggsave("figures/dynamic_rev.png", plot = dynamic_rev, width = 7, height =  5)
+
+  
+
+
+```
+
+
+
+# Personal Income Tax variables
+
+### Personal Income Average Tax Rate
+
+```{r plot personal income tax rate}
+
+pers_avg_tax <- ggplot() +
+  geom_line(data = dynamic, aes(x = year, y = TRP, color = "Dynamic")) +
+  geom_line(data = dynamic_int, aes(x = year, y = TRP, color = "Dynamic Int")) +
+  geom_line(data = baseline, aes(x = year, y = TRP, color = "Baseline"), linetype = "dashed") +
+  labs(title = "Personal Income Tax Rate", x = "Year", y = "Rate") +
+  scale_color_manual(values = c("Dynamic" = "blue", "Baseline" = "gray", "Dynamic Int" = "red")) +
+  theme(plot.title = element_text(hjust = 0.5)) +
+  scale_x_continuous(breaks = c(2017, 2019, 2021, 2023, 2025, 2027)) +
+  theme(legend.position = "none",  panel.background = element_rect(fill = "white",
+                                colour = "black",
+                                size = 0.5, linetype = "solid"))
+
+
+
+```
+
+### Marginal Personal Tax Rate
+
+```{r plot personal income marginal tax rate}
+
+ggplot() +
+  geom_line(data = dynamic, aes(x = year, y = TRFPM, color = "Dynamic")) +
+  geom_line(data = dynamic_int, aes(x = year, y = TRFPM, color = "Dynamic Int")) +
+  geom_line(data = baseline, aes(x = year, y = TRFPM, color = "Baseline"), linetype = "dashed") +
+  labs(title = "Personal Income Marginal Tax Rate", x = "Year", y = "Rate") +
+  scale_color_manual(values = c("Dynamic" = "blue", "Baseline" = "gray", "Dynamic Int" = "red")) +
+  theme(plot.title = element_text(hjust = 0.5)) +
+  scale_x_continuous(breaks = 2017:2027, labels = as.character(2017:2027))
+
+```
+
+### Personal tax base 
+
+```{r plot personal income tax base}
+
+dynamic$trp_base_delta <- (dynamic$TRP_Base/baseline$TRP_Base -1)*100
+dynamic_int$trp_base_delta <- (dynamic_int$TRP_Base/baseline$TRP_Base -1)*100
+
+ggplot() +
+  geom_line(data = dynamic, aes(x = year, y = trp_base_delta, color = "Dynamic")) +
+  geom_line(data = dynamic_int, aes(x = year, y = trp_base_delta, color = "Dynamic Int")) +
+  labs(title = "Personal Income Tax Base", x = "Year", y = "Percent Difference from Baseline") +
+  scale_color_manual(values = c("Dynamic" = "blue", "Dynamic Int" = "red")) +
+  theme(plot.title = element_text(hjust = 0.5)) +
+  scale_x_continuous(breaks = 2017:2027, labels = as.character(2017:2027)) +
+  theme(legend.position = "bottom", legend.title=element_blank(),
+   panel.background = element_rect(fill = "white",
+                                colour = "black",
+                                size = 0.5, linetype = "solid"))
+
+```
+
+
+# Coporate Income Tax Variables 
+
+### Corporate Average Tax Rate
+
+```{r plot Corporate tax rate}
+
+
+corp_avg_tax <- ggplot() +
+  geom_line(data = dynamic, aes(x = as.Date(year, format = "%Y"), y = TRCI, color = "Dynamic")) +
+  geom_line(data = dynamic_int, aes(x = as.Date(year, format = "%Y"), y = TRCI, color = "Dynamic Int")) +
+  geom_line(data = baseline, aes(x = year, y = TRCI, color = "Baseline"), linetype = "dashed") +
+  labs(title = "Corporate Tax Rate", x = "Year", y = "Rate") +
+  scale_color_manual(values = c("Dynamic" = "blue", "Baseline" = "gray", "Dynamic Int" = "red")) +
+  theme(plot.title = element_text(hjust = 0.5)) +
+  scale_x_continuous(breaks = c(2017, 2019, 2021, 2023, 2025, 2027)) +
+  theme(legend.position = "none",  panel.background = element_rect(fill = "white",
+                                colour = "black",
+                                size = 0.5, linetype = "solid")) 
+
+corp_avg_tax_legend <- ggplot() +
+  geom_line(data = dynamic, aes(x = year, y = TRCI, color = "Dynamic")) +
+  geom_line(data = dynamic_int, aes(x = year, y = TRCI, color = "Dynamic Int")) +
+  geom_line(data = baseline, aes(x = year, y = TRCI, color = "Baseline"), linetype = "dashed") +
+  labs(title = "Corporate Tax Rate", x = "Year", y = "Rate") +
+  scale_color_manual(values = c("Dynamic" = "blue", "Baseline" = "gray", "Dynamic Int" = "red")) +
+  theme(plot.title = element_text(hjust = 0.5)) +
+  scale_x_continuous(limits = c(2017, 2019, 2021, 2023, 2025, 2027)) +
+  theme(legend.position = "bottom", legend.title=element_blank()) 
+
+# function to extract legend from plot 
+get_only_legend <- function(plot) { 
+  plot_table <- ggplot_gtable(ggplot_build(plot)) 
+  legend_plot <- which(sapply(plot_table$grobs, function(x) x$name) == "guide-box") 
+  legend <- plot_table$grobs[[legend_plot]] 
+  return(legend) 
+} 
+
+legend <- get_only_legend(corp_avg_tax_legend)    
+
+
+combined_plot <- grid.arrange(pers_avg_tax, corp_avg_tax, ncol = 2)
+
+combined_plot <- grid.arrange(combined_plot, legend, nrow = 2, heights = c(10, 1))
+
+ggsave("figures/avg_tax_rates.png", plot = combined_plot, width = 10, height = 4, units = "in")
+
+
+```
+
+```{r}
+
+```
+
+
+### Corporate Marginal Tax Rate
+
+```{r plot Corporate income marginal tax rate}
+
+ggplot() +
+  geom_line(data = dynamic, aes(x = year, y = TRFCIM, color = "Dynamic")) +
+  geom_line(data = dynamic_int, aes(x = year, y = TRFCIM, color = "Dynamic Int")) +
+  geom_line(data = baseline, aes(x = year, y = TRFCIM, color = "Baseline"), linetype = "dashed") +
+  labs(title = "Corporate Income Marginal Tax Rate", x = "Year", y = "Rate") +
+  scale_color_manual(values = c("Dynamic" = "blue", "Baseline" = "gray", "Dynamic Int" = "red")) +
+  theme(plot.title = element_text(hjust = 0.5)) +
+  scale_x_continuous(breaks = 2017:2027, labels = as.character(2017:2027))
+
+```
+
+### Corporate tax base 
+
+```{r plot corporate income tax base}
+
+dynamic$trci_base_delta <- (dynamic$TRCI_Base/baseline$TRCI_Base -1)*100
+dynamic_int$trci_base_delta <- (dynamic_int$TRCI_Base/baseline$TRCI_Base -1)*100
+
+ggplot() +
+  geom_line(data = dynamic, aes(x = year, y = trci_base_delta, color = "Dynamic")) +
+  geom_line(data = dynamic_int, aes(x = year, y = trci_base_delta, color = "Dynamic Int")) +
+  labs(title = "Corporate Tax Base", x = "Year", y = "Percent Difference from Baseline") +
+  scale_color_manual(values = c("Dynamic" = "blue", "Dynamic Int" = "red")) +
+  theme(plot.title = element_text(hjust = 0.5)) +
+  scale_x_continuous(breaks = 2017:2027, labels = as.character(2017:2027))
+
+```
+
+# Federal Government Budget variables 
+
+### Deficit 
+
+```{r plot government surplus}
+
+dynamic$gfsrpn_delta <- (-dynamic$GFSRPN/-baseline$GFSRPN -1)*100
+dynamic_int$gfsrpn_delta <- (-dynamic_int$GFSRPN/-baseline$GFSRPN -1)*100
+
+deficit <- ggplot() +
+  geom_line(data = dynamic, aes(x = year, y = gfsrpn_delta, color = "Dynamic")) +
+  geom_line(data = dynamic_int, aes(x = year, y = gfsrpn_delta, color = "Dynamic Int")) +
+  labs(title = "Government Deficit", x = "Year", y = "Percent Difference from Baseline") +
+  scale_color_manual(values = c("Dynamic" = "blue", "Dynamic Int" = "red")) +
+  theme(plot.title = element_text(hjust = 0.5)) +
+  scale_x_continuous(breaks = 2017:2027, labels = as.character(2017:2027)) +
+  theme(plot.title = element_text(hjust = 0.5)) +
+  scale_x_continuous(breaks = 2017:2027, labels = as.character(2017:2027)) +
+    theme(legend.position = "bottom", legend.title=element_blank(),
+   panel.background = element_rect(fill = "white",
+                                colour = "black",
+                                size = 0.5, linetype = "solid"))
+
+
+ggsave("figures/deficit.png", plot = deficit, width = 7, height =  5)
+
+
+```
+
+### Net Transfers 
+
+```{r plot government net transfers}
+
+dynamic$gtn_delta <- (dynamic$GTN/baseline$GTN -1)*100
+dynamic_int$gtn_delta <- (dynamic_int$GTN/baseline$GTN -1)*100
+
+ggplot() +
+  geom_line(data = dynamic, aes(x = year, y = gtn_delta, color = "Dynamic")) +
+  geom_line(data = dynamic_int, aes(x = year, y = gtn_delta, color = "Dynamic Int")) +
+  labs(title = "Government Net Transfer Payments", x = "Year", y = "Percent Difference from Baseline") +
+  scale_color_manual(values = c("Dynamic" = "blue", "Dynamic Int" = "red")) +
+  theme(plot.title = element_text(hjust = 0.5)) +
+  scale_x_continuous(breaks = 2017:2027, labels = as.character(2017:2027))
+
+```
+
+### Net Interest
+
+```{r plot government net interest}
+
+dynamic$gfintn_delta <- (dynamic$GFINTN/baseline$GFINTN -1)*100
+dynamic_int$gfintn_delta <- (dynamic_int$GFINTN/baseline$GFINTN -1)*100
+
+interest <- ggplot() +
+  geom_line(data = dynamic, aes(x = year, y = gfintn_delta, color = "Dynamic")) +
+  geom_line(data = dynamic_int, aes(x = year, y = gfintn_delta, color = "Dynamic Int")) +
+  labs(title = "Government Net Interest Payments", x = "Year", y = "Percent Difference from Baseline") +
+  scale_color_manual(values = c("Dynamic" = "blue", "Dynamic Int" = "red")) +
+  theme(plot.title = element_text(hjust = 0.5)) +
+  scale_x_continuous(breaks = 2017:2027, labels = as.character(2017:2027)) +
+  theme(legend.position = "bottom", legend.title=element_blank(),
+   panel.background = element_rect(fill = "white",
+                                colour = "black",
+                                size = 0.5, linetype = "solid"))
+
+
+ggsave("figures/interest.png", plot = interest, width = 7, height =  5)
+  
+
+```
+
+### Fed Govnt Employee Comp
+
+```{r plot government employee comp}
+
+dynamic$egfln_delta <- (dynamic$EGFLN/baseline$EGFLN -1)*100
+dynamic_int$egfln_delta <- (dynamic_int$EGFLN/baseline$EGFLN -1)*100
+
+employ_comp <- ggplot() +
+  geom_line(data = dynamic, aes(x = year, y = egfln_delta, color = "Dynamic")) +
+  geom_line(data = dynamic_int, aes(x = year, y = egfln_delta, color = "Dynamic Int")) +
+  labs(title = "Government Employee Comp", x = "Year", y = "Percent Difference from Baseline") +
+  scale_color_manual(values = c("Dynamic" = "blue", "Dynamic Int" = "red")) +
+  theme(plot.title = element_text(hjust = 0.5)) +
+  scale_x_continuous(breaks = 2017:2027, labels = as.character(2017:2027)) +
+   theme(legend.position = "bottom", legend.title=element_blank(),
+   panel.background = element_rect(fill = "white",
+                                colour = "black",
+                                size = 0.5, linetype = "solid"))
+
+
+ggsave("figures/employ_comp.png", plot = employ_comp, width = 7, height =  5)
+
+```
+
+### Fed Govnt Expenditures
+
+```{r plot government expen}
+
+dynamic$egfe_delta <- (dynamic$EGFE/baseline$EGFE -1)*100
+dynamic_int$egfe_delta <- (dynamic_int$EGFE/baseline$EGFE -1)*100
+
+gov_expen <- ggplot() +
+  geom_line(data = dynamic, aes(x = year, y = egfe_delta, color = "Dynamic")) +
+  geom_line(data = dynamic_int, aes(x = year, y = egfe_delta, color = "Dynamic Int")) +
+  labs(title = "Government Expenditures", x = "Year", y = "Percent Difference from Baseline") +
+  scale_color_manual(values = c("Dynamic" = "blue", "Dynamic Int" = "red")) +
+  theme(plot.title = element_text(hjust = 0.5)) +
+  scale_x_continuous(breaks = 2017:2027, labels = as.character(2017:2027)) +
+   theme(legend.position = "bottom", legend.title=element_blank(),
+   panel.background = element_rect(fill = "white",
+                                colour = "black",
+                                size = 0.5, linetype = "solid"))
+
+
+ggsave("figures/gov_expen.png", plot = gov_expen, width = 7, height =  5)
+
+```
+
+# Real GDP and components 
+
+Note in the CBO Budget and Economic Outlook Report from 2018, table B-2 reports the economic effects of the TCJA. However, the effects of TCJA on the components of real GDP are reported in units as the contribution to real GDP instead of changes relative to the baseline. So, the units in this part of the table are such that the sum of the components adds to the total effect of TCJA on real GDP.
+
+In order to put the CBO components of real GDP numbers in the same units as we have here, I basically have just been treating the CBO components of real GDP numbers as follows (using personal consumption expenditures as an example)
+
+$$
+\text{Contribution of PCE to Difference Real GDP (reported in CBO table)} = \lambda_t \; \cdot \pi_t
+$$
+where $\lambda_t$ is the ratio of Real PCE to Real GDP in levels and $\pi_t$ is the percent difference in PCE post-TCJA relative to the baseline PCE. Note that $\pi_t$ is what we are trying to isolate in the graphs below. This is a very quick way to do this, but there is probably a more technically correct way. So if this sounds terribly terribly wrong, then I can adjust! 
+
+### Real GDP 
+
+```{r Real GDP}
+
+dynamic$real_gdp_delta <- (dynamic$XGDP/baseline$XGDP -1)*100
+dynamic_int$real_gdp_delta <- (dynamic_int$XGDP/baseline$XGDP -1)*100
+
+real_gdp <- ggplot() +
+  geom_line(data = dynamic, aes(x = year, y = real_gdp_delta, color = "Dynamic")) +
+  geom_line(data = dynamic_int, aes(x = year, y = real_gdp_delta, color = "Dynamic Int")) +
+  geom_line(data = cbo, aes(x = year, y = XGDP_cbo, color = "CBO"), linetype = "dashed" ) +
+  labs(title = "Real GDP", x = "Year", y = "Percent Difference from Baseline") +
+  scale_color_manual(values = c("Dynamic" = "blue", "Dynamic Int" = "red", "CBO" = "black")) +
+  theme(plot.title = element_text(hjust = 0.5)) +
+  scale_x_continuous(breaks = 2017:2027, labels = as.character(2017:2027)) +
+      theme(legend.position = "bottom", legend.title=element_blank(),
+   panel.background = element_rect(fill = "white",
+                                colour = "black",
+                                size = 0.5, linetype = "solid"))
+
+
+ggsave("figures/real_gdp.png", plot = real_gdp, width = 7, height =  5)
+
+  
+
+
+```
+
+### Nominal GDP
+
+```{r Nominal GDP}
+
+dynamic$gdp_delta <- (dynamic$XGDPN/baseline$XGDPN -1)*100
+dynamic_int$gdp_delta <- (dynamic_int$XGDPN/baseline$XGDPN -1)*100
+
+ggplot() +
+  geom_line(data = dynamic, aes(x = year, y = gdp_delta, color = "Dynamic")) +
+  geom_line(data = dynamic_int, aes(x = year, y = gdp_delta, color = "Dynamic Int")) +
+  geom_line(data = cbo, aes(x = year, y = XGDPN_cbo, color = "CBO"), linetype = "dashed" ) +
+  labs(title = "Nominal GDP", x = "Year", y = "Percent Difference from Baseline") +
+  scale_color_manual(values = c("Dynamic" = "blue", "Dynamic Int" = "red", "CBO" = "black")) +
+  theme(plot.title = element_text(hjust = 0.5)) +
+  scale_x_continuous(breaks = 2017:2027, labels = as.character(2017:2027))
+
+
+```
+
+### Personal Consumption Expenditures
+
+(Note CBO line refers to "private consumption")
+
+```{r PCE consumption}
+
+dynamic$cons_delta <- (dynamic$ECNIA/baseline$ECNIA -1)*100
+dynamic_int$cons_delta <- (dynamic_int$ECNIA/baseline$ECNIA -1)*100
+
+ggplot() +
+  geom_line(data = dynamic, aes(x = year, y = cons_delta, color = "Dynamic")) +
+  geom_line(data = dynamic_int, aes(x = year, y = cons_delta, color = "Dynamic Int")) +
+  geom_line(data = cbo, aes(x = year, y = ECNIA_cbo, color = "CBO"), linetype = "dashed") +
+  labs(title = "Real PCE", x = "Year", y = "Percent Difference from Baseline") +
+  scale_color_manual(values = c("Dynamic" = "blue", "Dynamic Int" = "red", "CBO" = "black")) +
+  theme(plot.title = element_text(hjust = 0.5)) +
+  scale_x_continuous(breaks = 2017:2027, labels = as.character(2017:2027))
+
+
+```
+
+### Business Fixed Investment
+
+### User Cost of Capital For Business Investment
+
+```{r plot cost of capital buss investment}
+
+ggplot() +
+  geom_line(data = dynamic, aes(x = year, y = RTBFI, color = "Dynamic")) +
+  geom_line(data = dynamic_int, aes(x = year, y = RTBFI, color = "Dynamic Int")) +
+  geom_line(data = baseline, aes(x = year, y = RTBFI, color = "Baseline"), linetype = "dashed") +
+  labs(title = "Cost of Capital for Business Investment", x = "Year", y = "Rate") +
+  scale_color_manual(values = c("Dynamic" = "blue", "Baseline" = "gray", "Dynamic Int" = "red")) +
+  theme(plot.title = element_text(hjust = 0.5)) +
+  scale_x_continuous(breaks = 2017:2027, labels = as.character(2017:2027))
+
+```
+
+### Business Fixed Investment
+
+```{r Business fixed investment}
+
+dynamic$bfi_delta <- (dynamic$EBFI/baseline$EBFI -1)*100
+dynamic_int$bfi_delta <- (dynamic_int$EBFI/baseline$EBFI -1)*100
+
+ggplot() +
+  geom_line(data = dynamic, aes(x = year, y = bfi_delta, color = "Dynamic")) +
+  geom_line(data = dynamic_int, aes(x = year, y = bfi_delta, color = "Dynamic Int")) +
+  geom_line(data = cbo, aes(x = year, y = EBFI_cbo, color = "CBO"), linetype = "dashed") +
+  labs(title = "Real Business Fixed Investment", x = "Year", y = "Percent Difference from Baseline") +
+  scale_color_manual(values = c("Dynamic" = "blue", "Dynamic Int" = "red", "CBO" = "black")) +
+  theme(plot.title = element_text(hjust = 0.5)) +
+  scale_x_continuous(breaks = 2017:2027, labels = as.character(2017:2027))
+
+
+```
+
+### Residential Investment
+
+### Real Cost of Capital For Residential Investment
+
+```{r plot cost of capital res investment}
+
+ggplot() +
+  geom_line(data = dynamic, aes(x = year, y = RCCH, color = "Dynamic")) +
+  geom_line(data = dynamic_int, aes(x = year, y = RCCH, color = "Dynamic Int")) +
+  geom_line(data = baseline, aes(x = year, y = RCCH, color = "Baseline"), linetype = "dashed") +
+  labs(title = "Real User Cost of Capital for Residential Investment", x = "Year", y = "Rate") +
+  scale_color_manual(values = c("Dynamic" = "blue", "Baseline" = "gray", "Dynamic Int" = "red")) +
+  theme(plot.title = element_text(hjust = 0.5)) +
+  scale_x_continuous(breaks = 2017:2027, labels = as.character(2017:2027))
+
+```
+
+### Residential Investment 
+
+```{r Residential investment}
+
+dynamic$resi_delta <- (dynamic$EH/baseline$EH -1)*100
+dynamic_int$resi_delta <- (dynamic_int$EH/baseline$EH -1)*100
+
+ggplot() +
+  geom_line(data = dynamic, aes(x = year, y = resi_delta, color = "Dynamic")) +
+  geom_line(data = dynamic_int, aes(x = year, y = resi_delta, color = "Dynamic Int")) +
+  geom_line(data = cbo, aes(x = year, y = EH_cbo, color = "CBO"), , linetype = "dashed") +
+  labs(title = "Real Residential Investment", x = "Year", y = "Percent Difference from Baseline") +
+  scale_color_manual(values = c("Dynamic" = "blue", "Dynamic Int" = "red", "CBO" = "black")) +
+  theme(plot.title = element_text(hjust = 0.5)) +
+  scale_x_continuous(breaks = 2017:2027, labels = as.character(2017:2027))
+
+
+```
+
+### Imports 
+
+```{r Imports}
+
+dynamic$imports_delta <- (dynamic$EM/baseline$EM -1)*100
+dynamic_int$imports_delta <- (dynamic_int$EM/baseline$EM -1)*100
+
+ggplot() +
+  geom_line(data = dynamic, aes(x = year, y = imports_delta, color = "Dynamic")) +
+  geom_line(data = dynamic_int, aes(x = year, y = imports_delta, color = "Dynamic Int")) +
+  geom_line(data = cbo, aes(x = year, y = EM_cbo, color = "CBO"), , linetype = "dashed") +
+  labs(title = "Real Imports", x = "Year", y = "Percent Difference from Baseline") +
+  scale_color_manual(values = c("Dynamic" = "blue", "Dynamic Int" = "red", "CBO" = "black")) +
+  theme(plot.title = element_text(hjust = 0.5)) +
+  scale_x_continuous(breaks = 2017:2027, labels = as.character(2017:2027))
+
+
+```
+
+### Exports 
+
+```{r Exports}
+
+dynamic$exports_delta <- (dynamic$EX/baseline$EX -1)*100
+dynamic_int$exports_delta <- (dynamic_int$EX/baseline$EX -1)*100
+
+ggplot() +
+  geom_line(data = dynamic, aes(x = year, y = exports_delta, color = "Dynamic")) +
+  geom_line(data = dynamic_int, aes(x = year, y = exports_delta, color = "Dynamic Int")) +
+  geom_line(data = cbo, aes(x = year, y = EX_cbo, color = "CBO"), linetype = "dashed") +
+  labs(title = "Real Exports", x = "Year", y = "Percent Difference from Baseline") +
+  scale_color_manual(values = c("Dynamic" = "blue", "Dynamic Int" = "red", "CBO" = "black")) +
+  theme(plot.title = element_text(hjust = 0.5)) +
+  scale_x_continuous(breaks = 2017:2027, labels = as.character(2017:2027))
+
+
+```
+
+# Labor Force Variables
+
+### LFPR 
+
+```{r plot LFPR}
+
+dynamic$lfpr_delta <- dynamic$LFPR - baseline$LFPR
+dynamic_int$lfpr_delta <- dynamic_int$LFPR - baseline$LFPR
+
+
+ggplot() +
+  geom_line(data = dynamic, aes(x = year, y = lfpr_delta, color = "Dynamic")) +
+  geom_line(data = dynamic_int, aes(x = year, y = lfpr_delta, color = "Dynamic Int")) +
+  labs(title = "LFPR", x = "Year", y = "Difference from Baseline (p.p.)") +
+  scale_color_manual(values = c("Dynamic" = "blue", "Dynamic Int" = "red")) +
+  theme(plot.title = element_text(hjust = 0.5)) +
+  scale_x_continuous(breaks = 2017:2027, labels = as.character(2017:2027))
+
+```
+
+### Unemployment Rate
+
+```{r plot u rate}
+
+dynamic$urate_delta <- dynamic$LUR - baseline$LUR
+dynamic_int$urate_delta <- dynamic_int$LUR - baseline$LUR
+
+u_rate <- ggplot() +
+  geom_line(data = dynamic, aes(x = year, y = urate_delta, color = "Dynamic")) +
+  geom_line(data = dynamic_int, aes(x = year, y = urate_delta, color = "Dynamic Int")) +
+  geom_line(data = cbo, aes(x = year, y = LUR_cbo, color = "CBO"), linetype = "dashed" ) +
+  labs(title = "Unemployment Rate", x = "Year", y = "Difference from Baseline (p.p.)") +
+  scale_color_manual(values = c("Dynamic" = "blue", "Dynamic Int" = "red", "CBO" = "black")) +
+  theme(plot.title = element_text(hjust = 0.5)) +
+  scale_x_continuous(breaks = 2017:2027, labels = as.character(2017:2027)) +
+  theme(plot.title = element_text(hjust = 0.5)) +
+  scale_x_continuous(breaks = 2017:2027, labels = as.character(2017:2027)) +
+    theme(legend.position = "bottom", legend.title=element_blank(),
+   panel.background = element_rect(fill = "white",
+                                colour = "black",
+                                size = 0.5, linetype = "solid"))
+
+
+ggsave("figures/u_rate.png", plot = u_rate, width = 7, height =  5)
+
+```
+
+### Employment
+
+Note that CBO only reports total nonfarm payroll in their appendix B table, and the FRBUS numbers are civilian employment.
+
+```{r plot employment}
+
+dynamic$emp_delta <- (dynamic$LEH/baseline$LEH -1)*100
+dynamic_int$emp_delta <- (dynamic_int$LEH/baseline$LEH -1)*100
+
+emp <- ggplot() +
+  geom_line(data = dynamic, aes(x = year, y = emp_delta, color = "Dynamic")) +
+  geom_line(data = dynamic_int, aes(x = year, y = emp_delta, color = "Dynamic Int")) +
+  geom_line(data = cbo, aes(x = year, y = nonfarm_cbo, color = "CBO"), linetype = "dashed") +
+  labs(title = "Employment", x = "Year", y = "Percent Difference from Baseline") +
+  scale_color_manual(values = c("Dynamic" = "blue", "Dynamic Int" = "red", "CBO" = "black")) +
+  theme(plot.title = element_text(hjust = 0.5)) +
+  scale_x_continuous(breaks = 2017:2027, labels = as.character(2017:2027)) +
+   scale_x_continuous(breaks = 2017:2027, labels = as.character(2017:2027)) +
+    theme(legend.position = "bottom", legend.title=element_blank(),
+   panel.background = element_rect(fill = "white",
+                                colour = "black",
+                                size = 0.5, linetype = "solid"))
+
+
+ggsave("figures/emp.png", plot = emp, width = 7, height =  5)
+
+
+```
+
+
+# Inflation
+
+### PCE Inflation
+
+```{r plot pce inflation}
+
+dynamic$picnia_delta <- (dynamic$PICNIA - baseline$PICNIA)
+dynamic_int$picnia_delta <- (dynamic_int$PICNIA - baseline$PICNIA)
+
+inflation <- ggplot() +
+  geom_line(data = dynamic, aes(x = year, y = picnia_delta, color = "Dynamic")) +
+  geom_line(data = dynamic_int, aes(x = year, y = picnia_delta, color = "Dynamic Int")) +
+  geom_line(data = cbo, aes(x = year, y = PICNIA_cbo, color = "CBO"), linetype = "dashed") +
+  labs(title = "PCE inflation", x = "Year", y = "Percentage Point Difference from Baseline") +
+  scale_color_manual(values = c("Dynamic" = "blue", "Dynamic Int" = "red", "CBO" = "black")) +
+  theme(plot.title = element_text(hjust = 0.5)) +
+  scale_x_continuous(breaks = 2017:2027, labels = as.character(2017:2027)) +
+       theme(legend.position = "bottom", legend.title=element_blank(),
+   panel.background = element_rect(fill = "white",
+                                colour = "black",
+                                size = 0.5, linetype = "solid"))
+
+
+ggsave("figures/inflation.png", plot = inflation, width = 7, height =  5)
+
+
+```
+
+# Interest Rates
+
+### Federal Funds Rate
+
+```{r plot Fed funds rate}
+
+dynamic$fedfunds_delta <- dynamic$RFF - baseline$RFF
+dynamic_int$fedfunds_delta <- dynamic_int$RFF - baseline$RFF
+
+fed_funds <- ggplot() +
+  geom_line(data = dynamic, aes(x = year, y = fedfunds_delta, color = "Dynamic")) +
+  geom_line(data = dynamic_int, aes(x = year, y = fedfunds_delta, color = "Dynamic Int")) +
+  geom_line(data = cbo, aes(x = year, y = RFF_cbo, color = "CBO"), linetype = "dashed") +
+  labs(title = "Federal Funds Rate", x = "Year", y = "Difference from Baseline (p.p.)") +
+  scale_color_manual(values = c("Dynamic" = "blue", "Dynamic Int" = "red", "CBO" = "black")) +
+  theme(plot.title = element_text(hjust = 0.5)) +
+  scale_x_continuous(breaks = 2017:2027, labels = as.character(2017:2027)) +
+       theme(legend.position = "bottom", legend.title=element_blank(),
+   panel.background = element_rect(fill = "white",
+                                colour = "black",
+                                size = 0.5, linetype = "solid"))
+
+
+ggsave("figures/fed_funds.png", plot = fed_funds, width = 7, height =  5)
+
+```
+
+### Three-month treasury bill
+
+```{r plot Three month rate}
+
+dynamic$threemo_delta <- dynamic$RTB - baseline$RTB
+dynamic_int$threemo_delta <- dynamic_int$RTB - baseline$RTB
+
+three_mo <- ggplot() +
+  geom_line(data = dynamic, aes(x = year, y = threemo_delta, color = "Dynamic")) +
+  geom_line(data = dynamic_int, aes(x = year, y = threemo_delta, color = "Dynamic Int")) +
+  geom_line(data = cbo, aes(x = year, y = RTB_cbo, color = "CBO"), linetype = "dashed") +
+  labs(title = "3-Month Treasury Bill", x = "Year", y = "Difference from Baseline (p.p.)") +
+  scale_color_manual(values = c("Dynamic" = "blue", "Dynamic Int" = "red", "CBO" = "black")) +
+  theme(plot.title = element_text(hjust = 0.5)) +
+  scale_x_continuous(breaks = 2017:2027, labels = as.character(2017:2027)) +
+         theme(legend.position = "bottom", legend.title=element_blank(),
+   panel.background = element_rect(fill = "white",
+                                colour = "black",
+                                size = 0.5, linetype = "solid"))
+
+
+ggsave("figures/three_mo.png", plot = three_mo, width = 7, height =  5)
+
+
+```
+
+
+### 10-year treasury bill
+
+```{r plot Ten year rate}
+dynamic$tenyr_delta <- dynamic$RG10 - baseline$RG10
+dynamic_int$tenyr_delta <- dynamic_int$RG10 - baseline$RG10
+
+ten_yr <- ggplot() +
+  geom_line(data = dynamic, aes(x = year, y = tenyr_delta, color = "Dynamic")) +
+  geom_line(data = dynamic_int, aes(x = year, y = tenyr_delta, color = "Dynamic Int")) +
+  geom_line(data = cbo, aes(x = year, y = RG10_cbo, color = "CBO"), linetype = "dashed") +
+  labs(title = "10-Year Treasury Note", x = "Year", y = "Difference from Baseline (p.p.)") +
+  scale_color_manual(values = c("Dynamic" = "blue", "Dynamic Int" = "red", "CBO" = "black")) +
+  theme(plot.title = element_text(hjust = 0.5)) +
+  scale_x_continuous(breaks = 2017:2027, labels = as.character(2017:2027)) +
+   scale_x_continuous(breaks = 2017:2027, labels = as.character(2017:2027)) +
+         theme(legend.position = "bottom", legend.title=element_blank(),
+   panel.background = element_rect(fill = "white",
+                                colour = "black",
+                                size = 0.5, linetype = "solid"))
+
+
+ggsave("figures/ten_yr.png", plot = ten_yr, width = 7, height =  5)
+```
+
+
+```{r plot all interest rates}
+
+fed_funds <- ggplot() +
+  geom_line(data = dynamic, aes(x = as.Date(year, format = "%Y"), y = fedfunds_delta, color = "Dynamic")) +
+  geom_line(data = dynamic_int, aes(x = year, y = fedfunds_delta, color = "Dynamic Int")) +
+  geom_line(data = cbo, aes(x = year, y = RFF_cbo, color = "CBO"), linetype = "dashed") +
+  labs(title = "Federal Funds Rate", x = "Year", y = "Difference from Baseline (p.p.)") +
+  scale_color_manual(values = c("Dynamic" = "blue", "Dynamic Int" = "red", "CBO" = "black")) +
+  theme(plot.title = element_text(hjust = 0.5)) +
+  scale_x_continuous(limits = c(2017, 2019, 2021, 2023, 2025, 2027)) +
+       theme(legend.position = "none", legend.title=element_blank(),
+   panel.background = element_rect(fill = "white",
+                                colour = "black",
+                                size = 0.5, linetype = "solid"))
+
+three_mo <- ggplot() +
+  geom_line(data = dynamic, aes(x = as.Date(year, format = "%Y"), y = threemo_delta, color = "Dynamic")) +
+  geom_line(data = dynamic_int, aes(x = year, y = threemo_delta, color = "Dynamic Int")) +
+  geom_line(data = cbo, aes(x = year, y = RTB_cbo, color = "CBO"), linetype = "dashed") +
+  labs(title = "3-Month Treasury Bill", x = "Year", y = "Difference from Baseline (p.p.)") +
+  scale_color_manual(values = c("Dynamic" = "blue", "Dynamic Int" = "red", "CBO" = "black")) +
+  theme(plot.title = element_text(hjust = 0.5)) +
+  scale_x_continuous(limits = c(2017, 2019, 2021, 2023, 2025, 2027)) +
+         theme(legend.position = "none", legend.title=element_blank(),
+   panel.background = element_rect(fill = "white",
+                                colour = "black",
+                                size = 0.5, linetype = "solid"))
+
+
+ten_yr <- ggplot() +
+  geom_line(data = dynamic, aes(x = as.Date(year, format = "%Y"), y = tenyr_delta, color = "Dynamic")) +
+  geom_line(data = dynamic_int, aes(x = year, y = tenyr_delta, color = "Dynamic Int")) +
+  geom_line(data = cbo, aes(x = year, y = RG10_cbo, color = "CBO"), linetype = "dashed") +
+  labs(title = "10-Year Treasury Note", x = "Year", y = "Difference from Baseline (p.p.)") +
+  scale_color_manual(values = c("Dynamic" = "blue", "Dynamic Int" = "red", "CBO" = "black")) +
+  theme(plot.title = element_text(hjust = 0.5)) +
+  scale_x_continuous(limits = c(2017, 2019, 2021, 2023, 2025, 2027)) +
+         theme(legend.position = "none", legend.title=element_blank(),
+   panel.background = element_rect(fill = "white",
+                                colour = "black",
+                                size = 0.5, linetype = "solid"))
+
+
+
+corp_avg_tax_legend <- ggplot() +
+  geom_line(data = dynamic, aes(x = as.Date(year, format = "%Y"), y = fedfunds_delta, color = "Dynamic")) +
+  geom_line(data = dynamic_int, aes(x = year, y = fedfunds_delta, color = "Dynamic Int")) +
+  geom_line(data = cbo, aes(x = year, y = RFF_cbo, color = "CBO"), linetype = "dashed") +
+  labs(title = "Federal Funds Rate", x = "Year", y = "Difference from Baseline (p.p.)") +
+  scale_color_manual(values = c("Dynamic" = "blue", "Dynamic Int" = "red", "CBO" = "black")) +
+  theme(plot.title = element_text(hjust = 0.5)) +
+  scale_x_continuous(limits = c(2017, 2019, 2021, 2023, 2025, 2027)) +
+       theme(legend.position = "bottom", legend.title=element_blank(),
+   panel.background = element_rect(fill = "white",
+                                colour = "black",
+                                size = 0.5, linetype = "solid"))
+
+
+# function to extract legend from plot 
+get_only_legend <- function(plot) { 
+  plot_table <- ggplot_gtable(ggplot_build(plot)) 
+  legend_plot <- which(sapply(plot_table$grobs, function(x) x$name) == "guide-box") 
+  legend <- plot_table$grobs[[legend_plot]] 
+  return(legend) 
+} 
+
+legend <- get_only_legend(corp_avg_tax_legend)    
+
+
+combined_plot <- grid.arrange(fed_funds, three_mo, ncol = 2)
+
+combined_plot <- grid.arrange(combined_plot, legend, nrow = 2, heights = c(10, 1))
+
+#ggsave("figures/avg_tax_rates.png", plot = combined_plot, width = 10, height = 4, units = "in")
+
+
+```
