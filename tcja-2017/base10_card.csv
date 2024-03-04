@@ -1,0 +1,2 @@
+ID,ts_id,start,end,ts_version,ts_vintage,lb_version,lb_vintage,cbo_path,corp_data
+baseline,baseline_2017,2017Q1,2027Q4,v1,2023120418,v1,2023122114 2017 BASE,/gpfs/gibbs/project/sarin/shared/model_data/Macro-Projections/v2/2017123100/baseline,corp_test.csv
