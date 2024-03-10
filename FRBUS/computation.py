@@ -69,9 +69,3 @@ def smooth_path(base: DataFrame, scen: DataFrame):
 
     return(out)
 
-# smooth_weight = NA
-# smooth_weight.loc[:start_smooth] = 0
-# smooth_weight.loc[start_smooth:end_smooth] = (date - start_smooth)/(end_smooth - start_smooth)
-# smooth_weight.loc[end_smooth:] = 1
-
-# rff_t = rff_baseline * smooth_weight + rff_scenario * (1-smooth_weight)

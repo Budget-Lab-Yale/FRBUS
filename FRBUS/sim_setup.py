@@ -99,7 +99,7 @@ def build_data(card: DataFrame, run: int, card_dates = False):
     gfsrpn_dent = denton_boot(macro["gfsrpn_macro"].to_numpy())
     
     # Set up fiscal/monetary policy levers
-    frbus = Frbus("/gpfs/gibbs/project/sarin/shared/conda_pkgs/pyfrbus/models/model.xml", mce="mcap+wp")
+    frbus = Frbus("/gpfs/gibbs/project/sarin/shared/conda_pkgs/pyfrbus/models/model-abroad-base.xml", mce="mcap+wp")
 
     longbase = levers(longbase, card, run)
 
@@ -128,9 +128,10 @@ def build_data(card: DataFrame, run: int, card_dates = False):
     out = sim.filter(regex="^((?!_).)*$")
 
     # Replace section of original longbase within our timeframe with new values
-    longbase.loc[start:end,:] = out.loc[start:end,:]
+    #longbase.loc[start:end,:] = out.loc[start:end,:]
 
-    return(longbase)
+    #return(longbase)
+    return(out)
 
 def calc_tpn_path(card: DataFrame, run: int, data: DataFrame, card_dates = False):
     #---------------------------------------------------------------------
