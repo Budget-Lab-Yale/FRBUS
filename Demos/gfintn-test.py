@@ -58,7 +58,7 @@ for run in range(0, len(card)):
         sim = data.loc[start:end,:]
         gfintn_base = sim.loc[start:end, "gfintn"]
 
-    else:
+    else: 
         per_mtr = get_housing_subsidy_rates(card, run)
         per_mtr = per_mtr.loc[:,"scen"]
         

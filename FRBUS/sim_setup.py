@@ -262,7 +262,7 @@ def dynamic_rev(card: DataFrame, run: int, start: Period, end: Period, data: Dat
             traj=["trp_t",    "trci_t",    "xgdpn_t",    "gfsrpn_t",    "xgdp_t",    "picxfe_t",    "lur_t",    "rff_t"], 
             inst=["trp_aerr", "trci_aerr", "xgdpn_aerr", "gfsrpn_aerr", "xgdp_aerr", "picxfe_aerr", "lur_aerr", "rff_aerr"])
 
-    else: 
+    else:  
         sim = frbus.mcontrol(start, end, data, targ=["trp", "trci"], traj=["trp_t", "trci_t"], inst=["trp_aerr", "trci_aerr"])
     
     data_yr = data.groupby(data.index.year).sum()
