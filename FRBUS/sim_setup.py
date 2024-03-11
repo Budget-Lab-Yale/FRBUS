@@ -57,7 +57,7 @@ def build_data(card: DataFrame, run: int, card_dates = False):
     #                         specific policy test.
     #---------------------------------------------------------------------
     longbase = load_data(os.path.join("/gpfs/gibbs/project/sarin/shared/raw_data/FRBUS", str(card.loc[run, "lb_version"]), str(card.loc[run, "lb_vintage"]), "LONGBASE.TXT"))
-    
+
     # Get tax variable paths from Tax Simulator
     ts = parse_tax_sim(card, run, True)
 
@@ -99,8 +99,9 @@ def build_data(card: DataFrame, run: int, card_dates = False):
     gfsrpn_dent = denton_boot(macro["gfsrpn_macro"].to_numpy())
     
     # Set up fiscal/monetary policy levers
-    frbus = Frbus("/gpfs/gibbs/project/sarin/shared/conda_pkgs/pyfrbus/models/model-abroad-base.xml", mce="mcap+wp")
+    frbus = Frbus("/gpfs/gibbs/project/sarin/shared/conda_pkgs/pyfrbus/models/model-fi-base.xml", mce="mcap+wp")
 
+    longbase.loc[start:end, "yhptn"].to_csv("hh.csv")
     longbase = levers(longbase, card, run)
 
     # Set paths and solve
@@ -118,19 +119,15 @@ def build_data(card: DataFrame, run: int, card_dates = False):
     with_adds.loc[start:end, "picxfe_t"] = with_adds.loc[start:end, "picxfe"]
     with_adds.loc[start:end, "lur_t"] = with_adds.loc[start:end, "lur"]
     with_adds.loc[start:end, "rff_t"] = with_adds.loc[start:end, "rff"]
+    with_adds.loc[start:end, "yhptn_t"] = with_adds.loc[start:end, "yhptn"] - (with_adds.loc[start:end, "uyhptn"] * .26 * with_adds.loc[start:end, "gfintn"])
 
     sim = frbus.mcontrol(start, end, with_adds, 
-        targ=["tpn",      "tcin",      "xgdpn",      "gfsrpn",      "xgdp",      "picxfe",      "lur",      "rff"], 
-        traj=["tpn_t",    "tcin_t",    "xgdpn_t",    "gfsrpn_t",    "xgdp_t",    "picxfe_t",    "lur_t",    "rff_t"], 
-        inst=["trp_aerr", "trci_aerr", "xgdpn_aerr", "gfsrpn_aerr", "xgdp_aerr", "picxfe_aerr", "lur_aerr", "rff_aerr"])
+        targ=["tpn",      "tcin",      "xgdpn",      "gfsrpn",      "xgdp",      "picxfe",      "lur",      "rff",      "yhptn"], 
+        traj=["tpn_t",    "tcin_t",    "xgdpn_t",    "gfsrpn_t",    "xgdp_t",    "picxfe_t",    "lur_t",    "rff_t",    "yhptn_t"], 
+        inst=["trp_aerr", "trci_aerr", "xgdpn_aerr", "gfsrpn_aerr", "xgdp_aerr", "picxfe_aerr", "lur_aerr", "rff_aerr", "yhptn_aerr"])
     
     # Filter out values not found in original longbase (they all contain '_')
     out = sim.filter(regex="^((?!_).)*$")
-
-    # Replace section of original longbase within our timeframe with new values
-    #longbase.loc[start:end,:] = out.loc[start:end,:]
-
-    #return(longbase)
     return(out)
 
 def calc_tpn_path(card: DataFrame, run: int, data: DataFrame, card_dates = False):
@@ -265,7 +262,7 @@ def dynamic_rev(card: DataFrame, run: int, start: Period, end: Period, data: Dat
             traj=["trp_t",    "trci_t",    "xgdpn_t",    "gfsrpn_t",    "xgdp_t",    "picxfe_t",    "lur_t",    "rff_t"], 
             inst=["trp_aerr", "trci_aerr", "xgdpn_aerr", "gfsrpn_aerr", "xgdp_aerr", "picxfe_aerr", "lur_aerr", "rff_aerr"])
 
-    else:
+    else:  
         sim = frbus.mcontrol(start, end, data, targ=["trp", "trci"], traj=["trp_t", "trci_t"], inst=["trp_aerr", "trci_aerr"])
     
     data_yr = data.groupby(data.index.year).sum()
