@@ -83,7 +83,7 @@ for run in range(0, len(card)):
     data_yr = data_yr.loc[start.year:end.year,]
     sim_yr = sim_yr.loc[start.year:end.year,]
     sim_yr_avg = sim_yr_avg.loc[start.year:end.year,]
-    
+     
     macro.index = data_yr.index
 
     dynamic = pandas.DataFrame()
