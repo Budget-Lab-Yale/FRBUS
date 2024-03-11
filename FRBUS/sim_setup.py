@@ -3,14 +3,14 @@ import scipy
 import os
 
 from pandas import DataFrame, Period, PeriodIndex, read_csv
-from numpy import array
+from numpy import array, NaN
 from typing import Union
 from pyfrbus.load_data import load_data
 from pyfrbus.frbus import Frbus
 from punchcard import parse_tax_sim, read_macro, parse_corp_mtr, get_housing_subsidy_rates, nipa_scalar
 from computation import denton_boot
 
-def levers(data: DataFrame, dfp: str, dmp: str):
+def levers(data: DataFrame, card: DataFrame, run: int):
     #---------------------------------------------------------------------
     # Sets fiscal and monetary policy levers for all simulations.
     # Parameters:
@@ -20,6 +20,12 @@ def levers(data: DataFrame, dfp: str, dmp: str):
     # Returns:
     #   data (DataFrame): Longbase with set levers
     #---------------------------------------------------------------------
+    start = pandas.Period(card.loc[run, "start"], freq="Q")
+    end = pandas.Period(card.loc[run, "end"], freq="Q")
+    dfp = card.loc[run, "dfp"]
+    dmp = card.loc[run, "dmp"]
+    rstar = card.loc[run, "rstar"]
+    
     fiscal = [col for col in data.columns if 'dfp' in col]
     fiscal.remove(dfp)
     monetary = [col for col in data.columns if 'dmp' in col]
@@ -27,7 +33,15 @@ def levers(data: DataFrame, dfp: str, dmp: str):
 
     data.loc[:, [dfp, dmp]] = 1
     data.loc[:, fiscal + monetary] = 0
-        
+    
+    if(rstar=="on"):
+        data.loc[:, "drstar"] = 1
+    elif(rstar=="delay"):
+        data.loc[start:start+39, "drstar"] = 0
+        data.loc[start+40:end, "drstar"] = 1
+    else:
+        data.loc[:, "drstar"] = 0
+
     return(data)
 
 def build_data(card: DataFrame, run: int, card_dates = False):
@@ -85,12 +99,13 @@ def build_data(card: DataFrame, run: int, card_dates = False):
     gfsrpn_dent = denton_boot(macro["gfsrpn_macro"].to_numpy())
     
     # Set up fiscal/monetary policy levers
-    frbus = Frbus("/gpfs/gibbs/project/sarin/shared/conda_pkgs/pyfrbus/models/model.xml", mce="mcap+wp")
+    frbus = Frbus("/gpfs/gibbs/project/sarin/shared/conda_pkgs/pyfrbus/models/model-abroad-base.xml", mce="mcap+wp")
 
-    longbase = levers(longbase, card.loc[run, "dfp"], card.loc[run, "dmp"])
+    longbase = levers(longbase, card, run)
 
     # Set paths and solve
     with_adds = frbus.init_trac(start, end, longbase)
+    
     with_adds.loc[start:end, "tpn_t"] = TPN_fs * nipa_scalar(card, run)
     with_adds.loc[start:end, "tcin_t"] = TCIN_fs
     with_adds.loc[start:end, "trfpm"] = per_mtr
@@ -113,9 +128,10 @@ def build_data(card: DataFrame, run: int, card_dates = False):
     out = sim.filter(regex="^((?!_).)*$")
 
     # Replace section of original longbase within our timeframe with new values
-    longbase.loc[start:end,:] = out.loc[start:end,:]
+    #longbase.loc[start:end,:] = out.loc[start:end,:]
 
-    return(longbase)
+    #return(longbase)
+    return(out)
 
 def calc_tpn_path(card: DataFrame, run: int, data: DataFrame, card_dates = False):
     #---------------------------------------------------------------------
@@ -193,6 +209,7 @@ def calc_tcin_path(card: DataFrame, run: int, data: DataFrame, card_dates = Fals
     TCIN_fs = (denton_boot(macro["TCIN_cs"].to_numpy()))
     
     return(TCIN_fs)
+
 
 def dynamic_rev(card: DataFrame, run: int, start: Period, end: Period, data: DataFrame, frbus: Frbus, outpath = None, delta=False):
     #---------------------------------------------------------------------

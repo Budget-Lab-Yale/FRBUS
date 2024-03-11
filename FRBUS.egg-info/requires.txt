@@ -1,0 +1,15 @@
+pandas
+scipy
+numpy
+black
+flake8
+mypy
+typing_extensions
+multiprocess
+sympy==1.3
+symengine
+matplotlib
+lxml
+networkx
+scikit-umfpack==0.3.3
+pyfrbus

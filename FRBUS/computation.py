@@ -1,5 +1,8 @@
 import numpy as np
+import pandas
+
 from numpy import array
+from pandas import DataFrame, Period, PeriodIndex
 
 def denton_boot(Annual: array):
     #---------------------------------------------------------------------
@@ -57,4 +60,12 @@ def inner_band(a, W):
     s = b.strides[0]
     strided = np.lib.stride_tricks.as_strided
     return strided(b[W-1:], shape=(W,len(a)+W-1), strides=(-s,s))
+
+def smooth_path(base: DataFrame, scen: DataFrame):
+    weights_base = np.linspace(start = 0, stop = 1, num = len(base))
+    weights_scen = np.flip(weights_base)
+    out = (base * weights_base) + (scen * weights_scen)
+    print(out)
+
+    return(out)
 
