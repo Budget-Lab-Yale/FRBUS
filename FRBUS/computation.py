@@ -65,7 +65,6 @@ def smooth_path(base: DataFrame, scen: DataFrame):
     weights_base = np.linspace(start = 0, stop = 1, num = len(base))
     weights_scen = np.flip(weights_base)
     out = (base * weights_base) + (scen * weights_scen)
-    print(out)
 
     return(out)
 

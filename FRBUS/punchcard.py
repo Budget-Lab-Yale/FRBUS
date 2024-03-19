@@ -84,6 +84,8 @@ def get_housing_subsidy_rates(card: DataFrame, run: int):
 
         scen = pandas.read_csv(os.path.join(outroot, str(card.loc[run, "ID"]), "static/detail", str(y)+'.csv'))
         base["scen"] = scen.loc[:,"mtr_first_mort_int"]
+
+        base = base[(abs(base["mtr_first_mort_int"]) < 2) & (abs(base["scen"]) < 2)]
         
         add = [numpy.average(base.loc[:,"mtr_first_mort_int"], weights = (base.loc[:,"weight"] * base.loc[:,"first_mort_int"])),\
             numpy.average(base.loc[:,"scen"], weights = (base.loc[:,"weight"] * base.loc[:,"first_mort_int"]))]
