@@ -16,14 +16,15 @@ from pyfrbus.load_data import load_data
 from sim_setup import build_data, calc_tcin_path, calc_tpn_path
 from processing import calc_delta
 from punchcard import run_out, nipa_scalar, read_macro, parse_tax_sim, get_housing_subsidy_rates, parse_corp_mtr
-from computation import denton_boot
+from computation import denton_boot, smooth_path
 
-stamp = datetime.datetime.now().strftime('%Y%m%d%H')+"_interest_shock"
+stamp = datetime.datetime.now().strftime('%Y%m%d%H%M')
+print(stamp) 
 
-card_path = os.path.join(os.path.dirname(__file__), "..", "punchcards", "tcja_ext_foreign_interest.csv")
+card_path = os.path.join(os.path.dirname(__file__), "..", "punchcards", "ctc_card.csv")
 card = read_csv(card_path)
 
-path = os.path.join("/gpfs/gibbs/project/sarin/shared/model_data/FRBUS/tcja_ext", stamp)
+path = os.path.join("/gpfs/gibbs/project/sarin/shared/model_data/FRBUS/ctc", stamp)
 if not os.path.exists(path):
     os.makedirs(path)
 card.to_csv(os.path.join(path, "punchcard.csv"), index=False)
@@ -34,7 +35,7 @@ frbus_s = Frbus("/gpfs/gibbs/project/sarin/shared/conda_pkgs/pyfrbus/models/mode
 start = pandas.Period(card.loc[0, "start"], freq="Q")
 end = pandas.Period(card.loc[0, "end"], freq="Q")
 
-baseline = build_data(card, 0, card_dates=True)
+baseline = build_data(card, 0, card_dates=True, frbus=frbus_b)
 with_adds = frbus_b.init_trac(start, end, baseline)
 
 for run in range(0, len(card)):
@@ -44,7 +45,7 @@ for run in range(0, len(card)):
     start = pandas.Period(card.loc[run, "start"], freq="Q")
     end   = pandas.Period(card.loc[run, "end"], freq="Q")
 
-    outpath = os.path.join("/gpfs/gibbs/project/sarin/shared/model_data/FRBUS/tcja_ext", stamp, card.loc[run, "ID"])
+    outpath = os.path.join(path, card.loc[run, "ID"])
         
     if not os.path.exists(outpath):
         os.makedirs(outpath)
@@ -57,7 +58,6 @@ for run in range(0, len(card)):
     if card.loc[run, "ID"]=="baseline":
         sim = data.loc[start:end,:]
         gfintn_base = sim.loc[start:end, "gfintn"]
-
     else: 
         per_mtr = get_housing_subsidy_rates(card, run)
         per_mtr = per_mtr.loc[:,"scen"]

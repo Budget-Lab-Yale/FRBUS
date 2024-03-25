@@ -21,7 +21,7 @@ def levers(data: DataFrame, card: DataFrame, run: int):
     #   data (DataFrame): Longbase with set levers
     #---------------------------------------------------------------------
     start = pandas.Period(card.loc[run, "start"], freq="Q")
-    end = pandas.Period(card.loc[run, "end"], freq="Q")
+    end = pandas.Period(card.loc[run, "end"], freq="Q") + 120
     dfp = card.loc[run, "dfp"]
     dmp = card.loc[run, "dmp"]
     rstar = card.loc[run, "rstar"]
@@ -44,7 +44,7 @@ def levers(data: DataFrame, card: DataFrame, run: int):
 
     return(data)
 
-def build_data(card: DataFrame, run: int, card_dates = False):
+def build_data(card: DataFrame, run: int, card_dates = False, frbus = Frbus):
     #---------------------------------------------------------------------
     # This function constructs a baseline dataset using the mcontrol protocol
     # against which alternate scenario runs are compared. 
@@ -99,9 +99,8 @@ def build_data(card: DataFrame, run: int, card_dates = False):
     gfsrpn_dent = denton_boot(macro["gfsrpn_macro"].to_numpy())
     
     # Set up fiscal/monetary policy levers
-    frbus = Frbus("/gpfs/gibbs/project/sarin/shared/conda_pkgs/pyfrbus/models/model-fi-base.xml", mce="mcap+wp")
+    #frbus = Frbus("/gpfs/gibbs/project/sarin/shared/conda_pkgs/pyfrbus/models/model-fi-base.xml", mce="mcap+wp")
 
-    longbase.loc[start:end, "yhptn"].to_csv("hh.csv")
     longbase = levers(longbase, card, run)
 
     # Set paths and solve
@@ -125,7 +124,7 @@ def build_data(card: DataFrame, run: int, card_dates = False):
         targ=["tpn",      "tcin",      "xgdpn",      "gfsrpn",      "xgdp",      "picxfe",      "lur",      "rff",      "yhptn"], 
         traj=["tpn_t",    "tcin_t",    "xgdpn_t",    "gfsrpn_t",    "xgdp_t",    "picxfe_t",    "lur_t",    "rff_t",    "yhptn_t"], 
         inst=["trp_aerr", "trci_aerr", "xgdpn_aerr", "gfsrpn_aerr", "xgdp_aerr", "picxfe_aerr", "lur_aerr", "rff_aerr", "yhptn_aerr"])
-    
+
     # Filter out values not found in original longbase (they all contain '_')
     out = sim.filter(regex="^((?!_).)*$")
     return(out)
@@ -227,42 +226,31 @@ def dynamic_rev(card: DataFrame, run: int, start: Period, end: Period, data: Dat
     macro = macro.loc[start.asfreq('Y'):end.asfreq('Y'), :]
 
     ts = parse_tax_sim(card, run, base=card.loc[run, "ID"]=="baseline")
-
-    per_mtr = get_housing_subsidy_rates(card, run)
-    per_mtr = per_mtr.loc[:,"scen"]
-
-    if delta:
-        data.loc[start:end, "trp_t"] = ((data.loc[start:end, "tpn_d"] + calc_tpn_path(card, run, data, True)) / (data.loc[start:end, "ypn"] - data.loc[start:end, "gtn"]))
-        data.loc[start:end, "trci_t"] = (data.loc[start:end, "tcin_d"] + calc_tcin_path(card, run, data, True)) / data.loc[start:end, "ynicpn"]
-    
-    else:
-        data.loc[start:end, "trp_t"] = (calc_tpn_path(card, run, data, True)) / (data.loc[start:end, "ypn"] - data.loc[start:end, "gtn"])
-        data.loc[start:end, "trci_t"] = (calc_tcin_path(card, run, data, True)) / data.loc[start:end, "ynicpn"]
-    
-    data.loc[start:end, "trfpm"] = per_mtr
-    data.loc[start:end, "trfcim"] = parse_corp_mtr(card, run)
-    data.loc[start:, "gfdrt"] = 1.1 #data.loc[start,"gfdbtn"] / data.loc[start,"xgdpn"] # Average? Max? Hardcode?
-    
-    if card.loc[run, "ID"]=="baseline":
-        macro['gfsrpn_macro'] = (macro["rev"] - macro["outlays"]) / macro["gdp"]
-        temp = data.loc[start:end, "xgdpn"]
-        temp = temp.groupby(temp.index.year).sum()
-        macro['gfsrpn_macro'] *= temp
-        gfsrpn_dent = denton_boot(macro['gfsrpn_macro'].to_numpy())
-
-        data.loc[start:end, "xgdpn_t"]  = data.loc[start:end, "xgdpn"]
-        data.loc[start:end, "xgdp_t"]   = data.loc[start:end, "xgdp"]
-        data.loc[start:end, "picxfe_t"] = data.loc[start:end, "picxfe"]
-        data.loc[start:end, "lur_t"]    = data.loc[start:end, "lur"]
-        data.loc[start:end, "rff_t"]    = data.loc[start:end, "rff"]
-        data.loc[start:end, "gfsrpn_t"] = gfsrpn_dent
         
-        sim = frbus.mcontrol(start, end, data, 
-            targ=["trp",      "trci",      "xgdpn",      "gfsrpn",      "xgdp",      "picxfe",      "lur",      "rff"], 
-            traj=["trp_t",    "trci_t",    "xgdpn_t",    "gfsrpn_t",    "xgdp_t",    "picxfe_t",    "lur_t",    "rff_t"], 
-            inst=["trp_aerr", "trci_aerr", "xgdpn_aerr", "gfsrpn_aerr", "xgdp_aerr", "picxfe_aerr", "lur_aerr", "rff_aerr"])
+    if card.loc[run, "ID"]=="baseline":
+        sim = data.loc[start:end,:]
+        #sim.loc[start:end, "gfintn"].to_csv('gfintn_base.csv')
 
     else:  
+        #gfintn_base = load_data('gfintn_base.csv')
+        per_mtr = get_housing_subsidy_rates(card, run)
+        per_mtr = per_mtr.loc[:,"scen"]
+
+        data.loc[start:end, "trfpm"] = per_mtr
+        data.loc[start:end, "trfcim"] = parse_corp_mtr(card, run)
+        data.loc[start:, "gfdrt"] = 1.1 #data.loc[start,"gfdbtn"] / data.loc[start,"xgdpn"] # Average? Max? Hardcode?
+
+        data.loc[start:end, "yhptn_aerr"] = (data.loc[start:end, "uyhptn"] * .74 * gfintn_base.loc[start:end, "gfintn"])
+        data.loc[start:end, "yhptn"] -= data.loc[start:end, "yhptn_aerr"]
+
+        if delta:
+            data.loc[start:end, "trp_t"] = ((data.loc[start:end, "tpn_d"] + calc_tpn_path(card, run, data, True)) / (data.loc[start:end, "ypn"] - data.loc[start:end, "gtn"]))
+            data.loc[start:end, "trci_t"] = (data.loc[start:end, "tcin_d"] + calc_tcin_path(card, run, data, True)) / data.loc[start:end, "ynicpn"]
+    
+        else:
+            data.loc[start:end, "trp_t"] = (calc_tpn_path(card, run, data, True)) / (data.loc[start:end, "ypn"] - data.loc[start:end, "gtn"])
+            data.loc[start:end, "trci_t"] = (calc_tcin_path(card, run, data, True)) / data.loc[start:end, "ynicpn"]
+        
         sim = frbus.mcontrol(start, end, data, targ=["trp", "trci"], traj=["trp_t", "trci_t"], inst=["trp_aerr", "trci_aerr"])
     
     data_yr = data.groupby(data.index.year).sum()
@@ -293,10 +281,7 @@ def dynamic_rev(card: DataFrame, run: int, start: Period, end: Period, data: Dat
             os.makedirs(outpath)
 
         out = sim.filter(regex="^((?!_).)*$")
-        
-        longbase = load_data(os.path.join("/gpfs/gibbs/project/sarin/shared/raw_data/FRBUS", str(card.loc[run, "lb_version"]), str(card.loc[run, "lb_vintage"]), "LONGBASE.TXT"))
-        longbase.loc[start:end,:] = out.loc[start:end,:]
-        longbase.to_csv(os.path.join(outpath,card.loc[run,"ID"]+"_LONGBASE.csv"))
+        out.to_csv(os.path.join(outpath,card.loc[run,"ID"]+"_LONGBASE.csv"))
 
     return(dynamic)
 
