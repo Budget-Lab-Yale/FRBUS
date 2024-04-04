@@ -9,7 +9,7 @@ import numpy
 import pandas
 from numpy import array, shape, nan
 
-sys.path.insert(0, "/gpfs/gibbs/project/sarin/jmk263/Repositories/FRBUS/FRBUS")
+sys.path.insert(0, "/gpfs/gibbs/project/sarin/jmk263/Repositories/src/FRBUS")
 
 from pyfrbus.frbus import Frbus
 from sim_setup import build_data, dynamic_rev
