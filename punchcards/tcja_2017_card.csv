@@ -1,0 +1,4 @@
+ID,start,end,ts_version,ts_vintage,lb_version,lb_vintage,macro_path,dfp,dmp,nipa_vintage,rstar
+baseline,2017Q1,2027Q4,v1,202404022019,v1,20171220,/gpfs/gibbs/project/sarin/shared/model_data/Macro-Projections/v3/2017123100/baseline,dfpdbt,dmpintay,20240125,on
+tcja_2017,2017Q1,2027Q4,v1,202404022019,v1,20171220,/gpfs/gibbs/project/sarin/shared/model_data/Macro-Projections/v3/2017123100/baseline,dfpdbt,dmpintay,20240125,on
+tcja_2017_jct,2017Q1,2027Q4,v1,202404022019,v1,20171220,/gpfs/gibbs/project/sarin/shared/model_data/Macro-Projections/v3/2017123100/baseline,dfpdbt,dmpintay,20240125,on
