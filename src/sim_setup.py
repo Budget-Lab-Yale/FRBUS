@@ -281,5 +281,5 @@ def dynamic_rev(card: DataFrame, run: int, start: Period, end: Period, data: Dat
         out = sim.filter(regex="^((?!_).)*$")
         out.to_csv(os.path.join(outpath,card.loc[run,"ID"]+"_LONGBASE.csv"))
 
-    return(dynamic)
+    return(dynamic, out)
 
