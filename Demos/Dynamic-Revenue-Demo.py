@@ -13,10 +13,10 @@ sys.path.insert(0, "/gpfs/gibbs/project/sarin/hre2/repositories/FRBUS/src")
 
 from pyfrbus.frbus import Frbus
 from sim_setup import build_data, dynamic_rev
-from processing import calc_delta
+from processing import calc_delta, process_dynamic_rev_delta
 from punchcard import nipa_scalar
 
-stamp = datetime.datetime.now().strftime('%Y%m%d%H')
+stamp = datetime.datetime.now().strftime('%Y%m%d%H%M')
 print(stamp)
 
 # Reading in topline parameters for the set of scenrios #
@@ -50,10 +50,13 @@ for run in range(0, len(card)):
     if not os.path.exists(outpath):
         os.makedirs(outpath)
 
-    dynamic = dynamic_rev(card, run, start, end, with_adds, frbus_s, outpath = outpath)
+    dynamic, newbase = dynamic_rev(card, run, start, end, with_adds, frbus_s, outpath = outpath)
     
     if run==0:
         dynamic_baseline = dynamic
+    
+    else:
+        process_dynamic_rev_delta(card, run, stamp, outpath)
 
     #### Calculate Dynamic Revenue Delta and other Output ####
 
@@ -64,6 +67,6 @@ for run in range(0, len(card)):
     delta.to_csv(os.path.join(outpath, "revenue_deltas.csv"))
     dynamic.to_csv(os.path.join(outpath, "dynamic_econ.csv"))
     dynamic_baseline.to_csv(os.path.join(outpath, "baseline_econ.csv"))
+
     print(f"Scenario {card.loc[run, 'ID']} completed")
     
-os.remove("gfintn_base.csv")
