@@ -9,7 +9,7 @@ import numpy
 import pandas
 from numpy import array, shape, nan
 
-sys.path.insert(0, "/gpfs/gibbs/project/sarin/jmk263/Repositories/FRBUS/src")
+sys.path.insert(0, "/gpfs/gibbs/project/sarin/hre2/repositories/FRBUS/src")
 
 from pyfrbus.frbus import Frbus
 from sim_setup import build_data, dynamic_rev
@@ -20,7 +20,7 @@ stamp = datetime.datetime.now().strftime('%Y%m%d%H')
 print(stamp)
 
 # Reading in topline parameters for the set of scenrios #
-card_path = os.path.join(os.path.dirname(__file__), "..", "punchcards", "ctc_card.csv")
+card_path = os.path.join(os.path.dirname(__file__), "..", "punchcards", "tcja_2017_card.csv")
 card = read_csv(card_path)
 
 # Creating output directory #
